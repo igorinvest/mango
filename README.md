@@ -1,7 +1,18 @@
 # Mango Streaming Server
 
-A lightweight macOS app that turns your Mac into a Chromecast/AirPlay (airplay is still in development and not available yet) streaming server for your local video library. Pick a video file, and Mango serves it (transcoding on the fly when needed)
-to a browser-based control center you can cast from to any Chromecast device on your network.
+A lightweight macOS app that turns your Mac into a Chromecast/AirPlay (airplay is still in development and not available yet) streaming server for your local video library. Pick a video file, and Mango serves it (transcoding on the fly when needed) to a browser-based control center you can cast from to any Chromecast device on your network.
+
+## Why Mango? A lightweight alternative to Plex and Jellyfin
+
+If you just want to cast a movie file from your Mac to a Chromecast without running a full media server platform, Mango is a lightweight alternative to Plex and Jellyfin:
+
+- **Zero setup** — no Docker containers, no library scans, no metadata agents to configure. Download it, pick a file, and cast it.
+- **Native TV playback** — Mango casts straight into Chromecast's own built-in default player, so your TV shows a standard, native Cast experience instead of a custom branded receiver app.
+- **Lightweight and fast** — a small native C++ engine instead of the heavier server processes behind Plex and Jellyfin, so it starts instantly and stays out of the way.
+- **Built-in Chromecast troubleshooting** — a live-checking diagnostic panel for the most common casting problems (no Cast device found, unsupported browser, local network permissions), which neither Plex nor Jellyfin surfaces as directly.
+- **A real native macOS app** — not a self-hosted server you have to babysit. Mac App Store distribution with automatic updates is coming soon; for now, grab it from Releases below.
+
+Mango isn't trying to replace everything Plex or Jellyfin offer. Mango is for casting a video file to your TV as simply and reliably as possible. It is a lightweight alternative for anyone who doesn't need a full media server just to watch one movie.
 
 ## Download
 
