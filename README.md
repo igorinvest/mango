@@ -8,6 +8,7 @@ If you just want to cast a movie file from your Mac to a Chromecast without runn
 
 - **Zero setup** — no Docker containers, no library scans, no metadata agents to configure. Download it, pick a file, and cast it.
 - **Native TV playback** — Mango casts straight into Chromecast's own built-in default player, so your TV shows a standard, native Cast experience instead of a custom branded receiver app.
+- **Multiple Audio and Subtitle track support** — Mango supports track selection and reliably plays audio/subs from video container.
 - **Lightweight and fast** — a small native C++ engine instead of the heavier server processes behind Plex and Jellyfin, so it starts instantly and stays out of the way.
 - **Built-in Chromecast troubleshooting** — a live-checking diagnostic panel for the most common casting problems (no Cast device found, unsupported browser, local network permissions), which neither Plex nor Jellyfin surfaces as directly.
 - **A real native macOS app** — not a self-hosted server you have to babysit. Mac App Store distribution with automatic updates is coming soon; for now, grab it from Releases below.
