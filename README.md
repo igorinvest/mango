@@ -60,15 +60,11 @@ Download `MangoStreamingServer.cer` and the `.msix` package from the release, th
 
 - macOS 15.7 or later
 - A Chromecast (or other Google Cast-compatible) device on the **same Wi-Fi network** as your Mac
-- Google Chrome or Microsoft Edge for casting — some Chromium-based browsers (Brave, plain
-  Chromium builds) omit real Google Cast support
 
 **Windows**
 
 - Windows 10 version 1809 (build 17763) or later
 - A Chromecast (or other Google Cast-compatible) device on the **same Wi-Fi network** as your PC
-- Google Chrome or Microsoft Edge for casting — some Chromium-based browsers (Brave, plain
-  Chromium builds) omit real Google Cast support
 
 ## Usage
 
