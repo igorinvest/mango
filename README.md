@@ -52,9 +52,9 @@ Microsoft Store distribution is coming soon; for now, grab it from Releases belo
 Download `MangoStreamingServer.cer` and the `.msix` package from the release, then:
 
 1. Right-click `MangoStreamingServer.cer` → **Install Certificate** → **Local Machine** → place it
-   in the **Trusted People** store (or **Trusted Root Certification Authorities**).
-   This isn't signed by a public certificate authority, so Windows needs to be told to trust it
-   first — the equivalent of the macOS Gatekeeper step above. You only need to do this once.
+   in the **Trusted People** store. This isn't signed by a public certificate authority, so
+   Windows needs to be told to trust it first — the equivalent of the macOS Gatekeeper step above.
+   You only need to do this once.
 3. Double-click the `.msix` file → **Install**.
 
 ## Requirements
