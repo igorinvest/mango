@@ -18,7 +18,7 @@ server platform, Mango is a lightweight alternative to Plex and Jellyfin:
   your TV shows a standard, native Cast experience instead of a custom branded receiver app.
 - **Lightweight and fast** — a small native C++ engine instead of the heavier server processes
   behind Plex and Jellyfin, so it starts instantly and stays out of the way.
-- **A real native macOS app** — not a self-hosted server you have to babysit. Mac App Store
+- **A real native macOS/Windows app** — not a self-hosted server you have to babysit. App Store
   distribution with automatic updates is coming soon; for now, grab it from Releases below.
 
 Mango isn't trying to replace everything Plex or Jellyfin offer — their metadata libraries,
