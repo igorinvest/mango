@@ -4,7 +4,8 @@ A lightweight native app for macOS and Windows that turns your computer into a C
 streaming server for your local video library. Pick a video file in the app, and Mango serves it
 (transcoding on the fly when needed) to any Chromecast device on your network.
 
-<img width="1024" height="672" alt="Screenshot 2026-09-19 205222" src="https://github.com/user-attachments/assets/29a60d9f-9390-4df5-9b1e-6f8127dfc4ca" />
+<img width="512" height="336" alt="Windows screenshot" src="https://github.com/user-attachments/assets/29a60d9f-9390-4df5-9b1e-6f8127dfc4ca" />
+<img width="526" height="382" alt="MacOS screenshot" src="https://github.com/user-attachments/assets/7e9eea11-d413-4c2e-89ef-e05f611930eb" />
 
 ## Why Mango? A lightweight alternative to Plex and Jellyfin
 
