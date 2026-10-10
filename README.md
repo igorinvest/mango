@@ -47,6 +47,8 @@ You only need to do this once.
 
 ### Windows
 
+Microsoft Store link - https://apps.microsoft.com/detail/9NRNZQHLVB5F?hl=en-us&gl=TR&ocid=pdpshare
+
 Microsoft Store distribution is coming soon; for now, grab it from Releases below.
 
 Download `MangoStreamingServer.cer` and the `.msix` package from the release, then:
