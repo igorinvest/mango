@@ -89,6 +89,74 @@ from the release, then:
    bar at the bottom of the window.
 4. Mango remembers where you left off — playing a movie again resumes from your last position
    (unless you've already finished it, in which case it starts over from the beginning).
+5. Playing a video from a folder plays the rest of that folder after it — see
+   [Playing a folder](#playing-a-folder).
+
+## External subtitles and audio
+
+Subtitle and audio files that sit next to a video show up in its audio/subtitle menu, after the
+tracks built into the file. Picking one works like picking a built-in track, on Chromecast and
+AirPlay, before playback or mid-stream.
+
+- **Subtitles:** `.srt`, `.vtt`, `.ass`, `.ssa`. Files that aren't UTF-8 (for example older
+  Cyrillic or Central European subtitles) are converted automatically.
+- **Audio:** `.mka`, `.ac3`, `.eac3`, `.dts`, `.aac`, `.m4a`, `.flac`, `.mp3`, `.opus` — typically
+  a dub shipped as a separate file.
+
+**Which files are found.** For a video named `Movie.mkv`, the same rules apply to subtitles and
+audio:
+
+- **Named after the video**, next to it or in any folder up to 3 levels below it:
+  `Movie.srt`, `Movie.en.forced.srt`, `Movie.rus.ac3`, `Extras/Audio/Movie.mka`. The name must
+  start with the video's name followed by `.`, `_` or `-` — `Movie 2.srt` belongs to
+  `Movie 2.mkv`, not `Movie.mkv`.
+- **Any file in a subtitles or audio folder** next to the video, and in that folder's subfolders,
+  when none there is named after the video (a single movie's release):
+  - subtitles: `Subs`, `Subtitles`, `<anything> Subs` (`RUS Subs`), `<anything> Subtitles`;
+  - audio: `Audio`, `Sound`, `Sounds`, `<anything> Sound` (`Rus Sound`), `<anything> Sounds`;
+  - a folder named after the video counts too: `Subs/Movie/2_English.srt`.
+
+  When a folder holds files for several episodes, each episode only gets the files named after
+  it.
+- **Another episode's folder is skipped:** `Subs/S01E02/` is never searched for `S01E01.mkv`.
+
+**Language and tags** are read from the file name: `Movie.en.srt`, `Movie.English.srt`,
+`Movie.rus.ac3`. When the name has no language, it's taken from the folders the file is in, so
+`RUS Subs/[Studio]/Movie.Studio.ass` and `Rus Sound/LostFilm/Movie.mka` are Russian. `forced`,
+`sdh`/`hi`/`cc` and `commentary` in the name are recognized too. A file with no recognizable
+language is still listed (by its file name); it just isn't picked automatically by language.
+
+**Default tracks.** The preferred audio and subtitle languages apply across built-in and
+external tracks alike: if you usually watch with Russian audio, a Russian `.mka` is picked even
+when the video has no built-in Russian track. When both have the same language, the built-in
+track wins.
+
+**Limits:**
+
+- External files are only found for videos added through **Add Folder**. Videos added one at a
+  time with **+** use only the tracks built into the file.
+- New or deleted files are picked up on **Refresh** and at launch.
+
+## Playing a folder
+
+Playing a video from a folder section turns that section into a playlist. When the video ends,
+the Now Playing bar shows **Playing next in 5…** with the next video's title, and then plays it
+on the same device. **Cancel** stops the chain; **Now** skips the countdown. During playback,
+the bar shows **Up next** with a **Next** button to skip ahead by hand.
+
+- **The order is the grid's current sort.** With Name sort, numbers are compared by value, so
+  `Episode 2` comes before `Episode 10`. Changing the sort during playback changes what comes
+  next. The search box doesn't filter the playlist.
+- **Only the videos directly in that folder** are played. At the end of the folder playback
+  stops; it doesn't continue into subfolders or the next season's folder. Videos in **Added
+  Manually** have no playlist.
+- **Each video starts like it would from its Play button:** it resumes if it was half-watched
+  (otherwise from the beginning), with your preferred audio and subtitle languages.
+- **Only a real ending starts the next video.** Stopping playback, the TV switching to another
+  app, or a conversion that failed partway never does.
+- **Play next video in folder automatically** in the sidebar turns this off (it's on by
+  default). With it off, Up next and Next are hidden too.
+- The Mango app has to stay open for the next video to start.
 
 ## Transcoding settings
 
@@ -153,6 +221,8 @@ Leave the other fields (file names, extensions, subtitle settings) unchanged.
   setting).
 - `defaultAudioLanguage` and `defaultSubtitlesLanguage`: preferred track languages, as
   three-letter codes (e.g. `"eng"`).
+- `autoplayNextInFolder`: the **Play next video in folder automatically** setting (`true` by
+  default).
 - `streamStartDelayMs`: how long Mango waits after starting the conversion before telling the
   TV to play (in milliseconds, up to `30000`). Raise it if playback fails or stalls right after
   starting.
