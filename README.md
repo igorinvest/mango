@@ -167,9 +167,28 @@ The sidebar's transcode mode covers most cases:
 - **Force Copy** never converts the video. It's the fastest option, but only works if your TV
   supports the file's format.
 
-For finer control, Mango keeps its configuration in JSON files that you can edit by hand. Quit
-Mango before editing them: the files are only read at startup, and changing a setting in the app
-rewrites `settings.json`, which would undo your edits.
+**Target Quality** (720p, 1080p or 4K, under the transcode mode) caps the size of the video
+Mango streams. Converted video is scaled down to fit it, never up, and a file larger than the
+target is converted even if your TV could play it as-is. Lower it if playback stutters on weak
+Wi-Fi. Force Copy ignores it.
+
+**Supported Formats…** tells Mango what your TV plays, so Automatic knows what it can copy:
+
+- **Video:** for each codec, the highest resolution your TV plays it at, or **Not supported**
+  to always convert files in that codec. Older Chromecasts (before Chromecast with Google TV)
+  can't play H.265 (HEVC): set it to Not supported for them.
+- **Rotated video:** tick it if your TV shows phone recordings upright when they're copied.
+  Unticked, rotated videos are always converted, which fixes their orientation.
+- **Audio:** ticked codecs are copied, unticked ones are converted to AAC.
+
+On macOS there's a tab for Chromecast and one for AirPlay. Changes apply to the next video you
+play.
+
+For finer control, Mango keeps its configuration in JSON files that you can edit by hand.
+`stream-profiles.json` and `encoding-defaults.json` are read every time a video starts, so edits
+to them apply to the next video without a restart. `settings.json` is only read at startup: quit
+Mango before editing it, since changing a setting in the app rewrites it and would undo your
+edits.
 
 **Where the files are**
 
@@ -179,10 +198,12 @@ rewrites `settings.json`, which would undo your edits.
   `%LOCALAPPDATA%\Packages\<Mango's package>\LocalCache\Roaming\Mango\`. The package folder
   is the one whose name contains `MangoStreamingServer`.
 
-If a file is missing, Mango recreates it with the defaults the next time it starts. To undo
-your changes, delete the file. Keep the JSON valid and the key names exact: if Mango can't read
-`stream-profiles.json` or `encoding-defaults.json` (because of a syntax error, a misspelled key
-or an unknown key), it replaces the file with the defaults.
+If a file is missing, Mango recreates it with the defaults. To undo your changes, delete the
+file (or use **Restore Defaults** in Supported Formats). Keep the JSON valid and the key names
+exact: if Mango can't read `stream-profiles.json` or `encoding-defaults.json` (because of a
+syntax error, a misspelled key or an unknown key), it renames it to
+`stream-profiles.json.invalid` (or `encoding-defaults.json.invalid`), so your edits aren't lost,
+and writes the defaults in its place.
 
 **`encoding-defaults.json`: quality of converted videos**
 
@@ -190,30 +211,48 @@ These settings only apply to tracks Mango has to convert. Tracks it copies keep 
 original quality.
 
 ```json
-{"videoBitrate": "5000k", "videoPixFmt": "yuv420p", "audioCodec": "aac", "audioBitrate": "256k"}
+{
+  "presets": {
+    "720p":  {"maxWidth": 1280, "maxHeight": 720,  "videoBitrate": "3000k",  "audioBitrate": "192k"},
+    "1080p": {"maxWidth": 1920, "maxHeight": 1080, "videoBitrate": "6000k",  "audioBitrate": "256k"},
+    "4k":    {"maxWidth": 3840, "maxHeight": 2160, "videoBitrate": "16000k", "audioBitrate": "256k"}
+  },
+  "videoPixFmt": "yuv420p",
+  "audioCodec": "aac"
+}
 ```
 
-- `videoBitrate`: raise it for better picture quality (e.g. `"8000k"` for 1080p, `"15000k"` for
-  4K), or lower it if playback stutters on slow Wi-Fi.
-- `audioBitrate`: the audio quality of converted tracks.
+- `presets`: one entry per Target Quality. `maxWidth`/`maxHeight` is the largest video that
+  quality allows; sizes are compared long side to long side, so a portrait phone video
+  (1080×1920) counts as 1080p. The bitrates are picked by the size of the video Mango outputs,
+  not by the Target Quality: a 720p file gets the `720p` bitrates even on the 4K setting. Raise
+  `videoBitrate` for better picture quality, or lower it if playback stutters.
 - `videoPixFmt` and `audioCodec`: leave these as they are unless you know your TV needs
   something else.
 
+Files written by Mango versions before Target Quality used a different format. Mango keeps an
+old file as `encoding-defaults.json.invalid` and writes the new defaults; copy your bitrates
+over by hand if you'd changed them.
+
 **`stream-profiles.json`: what your TV can play without conversion**
 
-This file decides what Mango copies and what it converts. It has one profile per protocol:
-`dash` for Chromecast and `hls` for AirPlay. A track is copied when it matches one of the
-profile's entries. Otherwise it's converted, using `encoding-defaults.json`.
+This is the file Supported Formats edits. It has one profile per protocol: `dash` for
+Chromecast and `hls` for AirPlay. A video track is copied when it matches one of the profile's
+entries and fits the Target Quality. Otherwise it's converted to H.264.
 
 - `videoCapabilities`: video codecs the TV plays (`h264`, `hevc`, `vp9`, …), each with
-  `maxWidth`, `maxHeight` and `maxFps`. Converted video keeps its original resolution, so
-  lowering these limits doesn't make 4K files play on an HD-only device. Remove a codec your TV
-  can't play (for example `vp9`) so those files get converted to H.264 instead of copied.
+  `maxWidth`, `maxHeight` and `maxFps`. A codec can have several entries (for example H.264 at
+  4K up to 30 fps and at 1080p up to 60 fps); a video is copied if it fits any of them.
+  Changing a codec in Supported Formats replaces its entries, including any fps limits you set
+  by hand.
 - `audioCapabilities`: audio codecs the TV plays (`aac`, `opus`, …), each with `maxChannels`
   and `maxSampleRate`.
+- `rotationSupported`: the **Rotated video** checkbox (`false` if missing).
 - `segmentDurationSec`: the length of each streamed chunk in seconds.
 
-Leave the other fields (file names, extensions, subtitle settings) unchanged.
+Leave the other fields (file names, extensions, subtitle settings) unchanged. A file written by
+an earlier version stays valid, but keeps its old defaults: use **Restore Defaults** to pick up
+H.265 (HEVC) support for Chromecast.
 
 **`settings.json`: general settings**
 
