@@ -27,6 +27,9 @@ server platform, Mango is a lightweight alternative to Plex and Jellyfin:
 - **A real native macOS/Windows app** — not a self-hosted server you have to babysit. Windows
   builds ship through the Microsoft Store with automatic updates; Mac App Store distribution is
   coming soon.
+- **No account, no telemetry** — no sign-up, no login, no cloud service in between. Mango
+  doesn't collect usage data or phone home: your library and what you watch stay on your
+  computer and your local network.
 
 Mango isn't trying to replace everything Plex or Jellyfin offer — their metadata libraries,
 multi-user accounts, and remote access are a different, bigger scope. Mango is built for a
