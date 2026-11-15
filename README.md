@@ -100,6 +100,20 @@ from the release, then:
 5. Playing a video from a folder plays the rest of that folder after it — see
    [Playing a folder](#playing-a-folder).
 
+## Supported formats
+
+- **Video files:** `.mkv`, `.mp4`, `.mov`, `.avi`, `.webm`, `.m2ts`, `.ts`. These are the files
+  **+** offers and **Add Folder** picks up.
+- **Video and audio codecs:** anything ffmpeg can decode — H.264, H.265 (HEVC), VP9, MPEG-2,
+  MPEG-4 and more; AAC, AC-3, E-AC-3, DTS, FLAC, Opus, MP3 and more. What your TV plays is
+  streamed as-is; everything else is converted on the fly (see
+  [Transcoding settings](#transcoding-settings)).
+- **Subtitles:** text tracks built into the file (SRT, ASS/SSA, WebVTT, mov_text) and external
+  `.srt`, `.vtt`, `.ass` and `.ssa` files are converted to WebVTT for the TV. Image-based
+  subtitles (Blu-ray PGS, DVD and DVB) can't be shown and are left out of the subtitle menu.
+- **External audio:** `.mka`, `.ac3`, `.eac3`, `.dts`, `.aac`, `.m4a`, `.flac`, `.mp3`, `.opus`
+  (see below).
+
 ## External subtitles and audio
 
 Subtitle and audio files that sit next to a video show up in its audio/subtitle menu, after the
