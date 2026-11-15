@@ -17,6 +17,11 @@ server platform, Mango is a lightweight alternative to Plex and Jellyfin:
   never have to.
 - **Native TV playback** — Mango casts straight into Chromecast's own built-in default player, so
   your TV shows a standard, native Cast experience instead of a custom branded receiver app.
+- **Multitrack audio and subtitles** — pick any audio or subtitle track built into the file, or
+  an external one sitting next to it (a separate dub `.mka`, an `.srt` in a `Subs` folder), and
+  switch tracks mid-stream. Your preferred languages are picked automatically.
+- **Folders as playlists** — add a folder and play any video in it: when it ends, Mango plays
+  the next one in the folder on the same TV, so a season of episodes plays through on its own.
 - **Lightweight and fast** — a small native C++ engine instead of the heavier server processes
   behind Plex and Jellyfin, so it starts instantly and stays out of the way.
 - **A real native macOS/Windows app** — not a self-hosted server you have to babysit. Windows
