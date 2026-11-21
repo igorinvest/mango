@@ -1,0 +1,161 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "macos-clang-base",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/opt/local/bin/clang-mp-22",
+                "CMAKE_CXX_COMPILER": "/opt/local/bin/clang++-mp-22",
+                "CMAKE_CXX_STANDARD": "23",
+                "CMAKE_CXX_STANDARD_REQUIRED": "YES",
+                "CMAKE_CXX_EXTENSIONS": "OFF",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "15.7",
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "VCPKG_TARGET_TRIPLET": "arm64-osx"
+            },
+            "environment": {
+                "PATH": "/opt/local/Library/Frameworks/Python.framework/Versions/3.14/bin:$penv{PATH}"
+            },
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        },
+        {
+            "name": "macos-clang",
+            "displayName": "macOS MacPorts Clang (C++23), arm64 Debug",
+            "inherits": "macos-clang-base",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "macos-clang-release",
+            "displayName": "macOS MacPorts Clang (C++23), arm64 Release",
+            "inherits": "macos-clang-base",
+            "binaryDir": "${sourceDir}/build-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "windows-clangcl",
+            "displayName": "Windows Clang-cl (C++23), x64",
+            "generator": "Visual Studio 18 2026",
+            "architecture": "x64",
+            "toolset": "ClangCL",
+            "binaryDir": "${sourceDir}/build-windows-clangcl",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
+            },
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        },
+        {
+            "name": "linux-x64-base",
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-22",
+                "CMAKE_CXX_COMPILER": "clang++-22",
+                "CMAKE_CXX_STANDARD": "23",
+                "CMAKE_CXX_STANDARD_REQUIRED": "YES",
+                "CMAKE_CXX_EXTENSIONS": "OFF",
+                "VCPKG_TARGET_TRIPLET": "x64-linux",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/vcpkg-triplets"
+            },
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        },
+        {
+            "name": "linux-x64",
+            "displayName": "Linux Clang 22 (C++23), x64 Debug",
+            "inherits": "linux-x64-base",
+            "binaryDir": "${sourceDir}/build-linux-x64",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "linux-x64-release",
+            "displayName": "Linux Clang 22 (C++23), x64 Release",
+            "inherits": "linux-x64-base",
+            "binaryDir": "${sourceDir}/build-linux-x64-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "linux-x64-system-ffmpeg",
+            "displayName": "Linux x64 Release without bundled ffmpeg (uses the system ffmpeg)",
+            "inherits": "linux-x64-base",
+            "binaryDir": "${sourceDir}/build-linux-x64-system-ffmpeg",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "MANGO_BUNDLE_FFMPEG": "OFF"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "macos",
+            "displayName": "macOS arm64 Debug (same as macos-arm64-debug)",
+            "configurePreset": "macos-clang"
+        },
+        {
+            "name": "macos-arm64-debug",
+            "configurePreset": "macos-clang"
+        },
+        {
+            "name": "macos-arm64-release",
+            "configurePreset": "macos-clang-release"
+        },
+        {
+            "name": "windows-clangcl-x64-debug",
+            "configurePreset": "windows-clangcl",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-clangcl-x64-release",
+            "configurePreset": "windows-clangcl",
+            "configuration": "Release"
+        },
+        {
+            "name": "windows-clangcl-debug",
+            "displayName": "Same as windows-clangcl-x64-debug",
+            "configurePreset": "windows-clangcl",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-clangcl-release",
+            "displayName": "Same as windows-clangcl-x64-release",
+            "configurePreset": "windows-clangcl",
+            "configuration": "Release"
+        },
+        {
+            "name": "linux-x64-debug",
+            "configurePreset": "linux-x64"
+        },
+        {
+            "name": "linux-x64-release",
+            "configurePreset": "linux-x64-release"
+        },
+        {
+            "name": "linux-x64-system-ffmpeg",
+            "configurePreset": "linux-x64-system-ffmpeg"
+        }
+    ]
+}

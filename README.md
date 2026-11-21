@@ -4,6 +4,8 @@ A lightweight native app for macOS and Windows that turns your computer into a C
 streaming server for your local video library. Pick a video file in the app, and Mango serves it
 (transcoding on the fly when needed) to any Chromecast device on your network.
 
+On Linux, Mango runs headless, as a console server or a systemd service: see [LINUX.md](LINUX.md).
+
 <img width="512" height="336" alt="Windows screenshot" src="https://github.com/user-attachments/assets/29a60d9f-9390-4df5-9b1e-6f8127dfc4ca" />
 <img width="526" height="382" alt="MacOS screenshot" src="https://github.com/user-attachments/assets/7e9eea11-d413-4c2e-89ef-e05f611930eb" />
 
@@ -15,6 +17,9 @@ server platform, Mango is a lightweight alternative to Plex and Jellyfin:
 - **Zero setup** — no Docker containers, no metadata agents to configure. Download it, pick a
   file, and cast it. Want a library? Add a folder and Mango finds every video in it — but you
   never have to.
+- **No account, no telemetry** — no sign-up, no login, no cloud service in between. Mango
+  doesn't collect usage data or phone home: your library and what you watch stay on your
+  computer and your local network.
 - **Native TV playback** — Mango casts straight into Chromecast's own built-in default player, so
   your TV shows a standard, native Cast experience instead of a custom branded receiver app.
 - **Multitrack audio and subtitles** — pick any audio or subtitle track built into the file, or
@@ -27,9 +32,6 @@ server platform, Mango is a lightweight alternative to Plex and Jellyfin:
 - **A real native macOS/Windows app** — not a self-hosted server you have to babysit. Windows
   builds ship through the Microsoft Store with automatic updates; Mac App Store distribution is
   coming soon.
-- **No account, no telemetry** — no sign-up, no login, no cloud service in between. Mango
-  doesn't collect usage data or phone home: your library and what you watch stay on your
-  computer and your local network.
 
 Mango isn't trying to replace everything Plex or Jellyfin offer — their metadata libraries,
 multi-user accounts, and remote access are a different, bigger scope. Mango is built for a
@@ -40,7 +42,7 @@ lightweight alternative for anyone who doesn't need a full media server just to 
 
 Get Mango for Windows from the
 [Microsoft Store](https://apps.microsoft.com/detail/9NRNZQHLVB5F), or grab the latest build for
-either platform from the [Releases](../../releases) page.
+either platform from the [Releases](https://github.com/igorinvest/mango/releases) page.
 
 ### macOS
 
@@ -82,6 +84,10 @@ from the release, then:
 
 - Windows 10 version 1809 (build 17763) or later
 - A Chromecast (or other Google Cast-compatible) device on the **same Wi-Fi network** as your PC
+
+**Linux** (headless, no desktop app)
+
+- Ubuntu 24.04 or later, or Debian 13 or later, x64. Install with one command: see [LINUX.md](LINUX.md).
 
 ## Usage
 
@@ -189,12 +195,16 @@ The sidebar's transcode mode covers most cases:
 - **Force Copy** never converts the video. It's the fastest option, but only works if your TV
   supports the file's format.
 
-**Target Quality** (720p, 1080p or 4K, under the transcode mode) caps the size of the video
+The rest is in **Settings** (the gear next to the status in the sidebar, or ⌘, on macOS and
+Ctrl+, on Windows). Every setting there applies right away.
+
+**Target Quality** (720p, 1080p or 4K, in Settings → Video) caps the size of the video
 Mango streams. Converted video is scaled down to fit it, never up, and a file larger than the
 target is converted even if your TV could play it as-is. Lower it if playback stutters on weak
 Wi-Fi. Force Copy ignores it.
 
-**Supported Formats…** tells Mango what your TV plays, so Automatic knows what it can copy:
+**Supported Formats** (in Settings → Video) tells Mango what your TV plays, so Automatic knows
+what it can copy:
 
 - **Video:** for each codec, the highest resolution your TV plays it at, or **Not supported**
   to always convert files in that codec. Older Chromecasts (before Chromecast with Google TV)
@@ -205,6 +215,10 @@ Wi-Fi. Force Copy ignores it.
 
 On macOS there's a tab for Chromecast and one for AirPlay. Changes apply to the next video you
 play.
+
+**Languages** (in Settings) sets your preferred audio and subtitle languages and when subtitles
+show. **Advanced** turns on debug logging (from the next launch) and opens the logs and
+settings folders.
 
 For finer control, Mango keeps its configuration in JSON files that you can edit by hand.
 `stream-profiles.json` and `encoding-defaults.json` are read every time a video starts, so edits
@@ -219,13 +233,17 @@ edits.
 - **Windows (Microsoft Store or `.msix`):**
   `%LOCALAPPDATA%\Packages\<Mango's package>\LocalCache\Roaming\Mango\`. The package folder
   is the one whose name contains `MangoStreamingServer`.
+- **Linux:** `~/.local/share/Mango/` (or `$XDG_DATA_HOME/Mango/`).
+
+Settings → Advanced → **Open Settings Folder** opens it.
 
 If a file is missing, Mango recreates it with the defaults. To undo your changes, delete the
 file (or use **Restore Defaults** in Supported Formats). Keep the JSON valid and the key names
 exact: if Mango can't read `stream-profiles.json` or `encoding-defaults.json` (because of a
 syntax error, a misspelled key or an unknown key), it renames it to
 `stream-profiles.json.invalid` (or `encoding-defaults.json.invalid`), so your edits aren't lost,
-and writes the defaults in its place.
+and writes the defaults in its place. The same goes for `device-profiles.json`. Mango shows a
+warning when it does this.
 
 **`encoding-defaults.json`: quality of converted videos**
 
@@ -280,12 +298,38 @@ H.265 (HEVC) support for Chromecast.
 
 - `videoTranscodeMode`: `automatic`, `forceDecode` or `forceCopy` (the same as the sidebar
   setting).
-- `defaultAudioLanguage` and `defaultSubtitlesLanguage`: preferred track languages, as
-  three-letter codes (e.g. `"eng"`).
+- `encodingPreset`: `720p`, `1080p` or `4k` (the Target Quality setting; `1080p` by default).
+- `audioLanguages`: preferred audio languages, best first, as language codes (e.g.
+  `["jpn", "eng"]`). Empty: the file's default track.
+- `subtitleMode`: when subtitles show for a file you didn't pick tracks for: `off`,
+  `foreignAudioOnly` (when the audio isn't in one of your languages; the default), `always` or
+  `forcedOnly`. Forced subtitles in the audio's language show in every mode but `off`.
+- `subtitleLanguages`: preferred subtitle languages, best first. Empty: the same as
+  `audioLanguages`.
+
+  Playback never changes these. Tracks you pick are remembered for the file, and their
+  languages for the rest of its folder (`folder_tracks.json`).
 - `autoplayNextInFolder`: the **Play next video in folder automatically** setting (`true` by
   default).
+- `listenOnlyWhileStreaming`: opens the HTTP port only while something streams (`true` by
+  default).
+- `showSystemNotifications`: a notification when a video finishes while Mango's window isn't
+  in front (`true` by default).
+- `logDebug`: more detail in the logs, from the next launch (`false` by default).
 - `streamStartDelayMs`: how long Mango waits after starting the conversion before telling the
   TV to play (in milliseconds, up to `30000`). Raise it if playback fails or stalls right after
   starting.
 - `streamStartReadyPercent`: the wait ends early once this percentage of the file has been
   converted (`0` to `100`).
+
+## Building from source
+
+See [DEVELOPERS.md](DEVELOPERS.md).
+
+## License
+
+Mango's source is published under the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0): free to use,
+change and share for noncommercial purposes. The license grants no rights to the Mango name or logo.
+
+Mango bundles `ffmpeg`/`ffprobe` binaries built under the LGPL license (no GPL-only components
+enabled). See the [FFmpeg project](https://ffmpeg.org/legal.html) for details.

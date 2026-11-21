@@ -1,0 +1,147 @@
+.DS_Store
+.vscode/
+.idea/
+.vs
+.VSCodeCounter
+.cert
+debug
+release
+./x64/
+./ARM64/
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+*.so.*
+
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
+Build/
+build-*/
+bin/
+obj/
+AppPackages/
+BundleArtifacts/
+Generated Files/
+packages/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+
+# Visual Studio / WinUI
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.appxsym
+*.appxrecipe
+*.pfx
+*.pfx.sig
+*.iobj
+*.ipdb
+*.idb
+*.tlog
+*.lastbuildstate
+*.ipch
+*.aps
+*.winmd
+*.xbf
+*.pri
+*.exe.recipe
+*.embed.manifest
+*.embed.manifest.res
+
+# MSBuild / MIDL/XAML compiler output for the WinUI project (x64/Debug etc.,
+# both solution- and project-level; also holds Generated Files/, AppX/, ...)
+x64/
+x86/
+ARM/
+ARM64/
+ipch/
+
+# Xcode / Swift / macOS
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+*.dSYM/
+*.dSYM.zip
+*.app.dSYM/
+*.ipa
+*.xcarchive
+*.xcframework
+*.swiftpm/
+.swiftpm/
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# vcpkg
+vcpkg_installed/
+
+# debug information files
+*.dwo
+
+# test output & cache
+Testing/
+.cache/
+
+# Per-machine overrides for the Xcode "Build engine" phase
+Mango Streaming Server/build-engine.local.env

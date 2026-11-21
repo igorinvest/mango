@@ -1,0 +1,31 @@
+# Mango as a headless server, running as your own user (a systemd user
+# service), so it reads your videos with your permissions and keeps its data
+# in ~/.local/share/Mango, the same place the console uses. Not enabled on
+# install:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now mango
+#   loginctl enable-linger      # keeps it running while you're logged out
+#
+# Only one Mango runs the engine: `mango` in a terminal attaches to this
+# service over its control socket and runs its commands here, and `quit`
+# there leaves it running (see app/LinuxMain.hpp).
+
+[Unit]
+Description=Mango streaming server (Chromecast and AirPlay)
+
+[Service]
+Type=simple
+# --service: the engine and the control socket, no prompt. Serves until
+# stopped; `shutdown` from a terminal exits with 0, which isn't restarted.
+ExecStart=/usr/bin/mango --service
+StandardInput=null
+# SIGTERM goes to Mango only; it stops its own ffmpeg and saves playback
+# positions (ShutdownCoordinator), then systemd kills what's left.
+KillMode=mixed
+TimeoutStopSec=20
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,17 @@
+{
+  "name": "mango-signal",
+  "private": true,
+  "description": "WebRTC signaling for Mango (see README.md)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "check": "for f in src/*.js scripts/*.js; do node --check \"$f\" || exit 1; done",
+    "smoke": "node scripts/smoke.js"
+  },
+  "dependencies": {
+    "ws": "^8.23.0"
+  }
+}

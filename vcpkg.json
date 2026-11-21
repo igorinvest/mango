@@ -1,0 +1,65 @@
+{
+  "name": "mango",
+  "version-string": "1.0.0",
+  "builtin-baseline": "3c8fa990c006f2def52cccf7f7c7e9f3bcff0333",
+  "dependencies": [
+    "glaze",
+    "fmt",
+    "blake3",
+    "mdns",
+    "mbedtls",
+    {
+      "name": "libdatachannel",
+      "default-features": false,
+      "features": [
+        "ws"
+      ]
+    },
+    "openssl",
+    {
+      "name": "cpp-httplib",
+      "default-features": false
+    }
+  ],
+  "default-features": [
+    "bundled-ffmpeg"
+  ],
+  "features": {
+    "bundled-ffmpeg": {
+      "description": "ffmpeg and ffprobe built here and shipped next to Mango (MANGO_BUNDLE_FFMPEG). Linux builds can leave it out and use the system ffmpeg.",
+      "dependencies": [
+        {
+          "name": "ffmpeg",
+          "features": [
+            "ffmpeg",
+            "ffprobe",
+            {
+              "name": "nvcodec",
+              "platform": "windows"
+            },
+            {
+              "name": "qsv",
+              "platform": "windows"
+            },
+            {
+              "name": "amf",
+              "platform": "windows"
+            },
+            {
+              "name": "vaapi",
+              "platform": "linux"
+            },
+            {
+              "name": "nvcodec",
+              "platform": "linux & x64"
+            },
+            {
+              "name": "qsv",
+              "platform": "linux & x64"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
