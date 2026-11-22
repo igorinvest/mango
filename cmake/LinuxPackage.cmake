@@ -2,6 +2,7 @@
 #
 #   /usr/lib/mango/Mango            the engine with its console
 #   /usr/lib/mango/ffmpeg, ffprobe  when MANGO_BUNDLE_FFMPEG is ON
+#   /usr/lib/mango/libva*.so.2      the bundled ffmpeg's libva (VAAPI)
 #   /usr/bin/mango -> ../lib/mango/Mango
 #   /usr/lib/systemd/user/mango.service  a user service: runs as whoever enables it
 #
@@ -22,6 +23,11 @@ if(MANGO_BUNDLE_FFMPEG)
         "$<TARGET_FILE_DIR:Mango>/ffmpeg"
         "$<TARGET_FILE_DIR:Mango>/ffprobe"
         DESTINATION ${MANGO_LIB_DIR})
+
+    # libva for ffmpeg's VAAPI encoder (see the ffmpeg bundling in CMakeLists.txt).
+    foreach(lib IN LISTS MANGO_BUNDLED_FFMPEG_LIBS)
+        install(FILES "$<TARGET_FILE_DIR:Mango>/${lib}" DESTINATION ${MANGO_LIB_DIR})
+    endforeach()
 endif()
 
 # The /usr/bin/mango symlink: made in the build folder, installed as a link.
@@ -48,6 +54,8 @@ set(CPACK_STRIP_FILES ON)
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SECTION "video")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+# Lets dpkg-shlibdeps find the bundled libva, which no system package owns.
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS_PRIVATE_DIRS "${CMAKE_BINARY_DIR}")
 
 # The system ffmpeg brings libx264, the software fallback when there's no
 # hardware encoder. Without a bundled one it's the only ffmpeg.

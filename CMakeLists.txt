@@ -261,6 +261,28 @@ if(MANGO_BUNDLE_FFMPEG AND DEFINED VCPKG_TARGET_TRIPLET)
 
         endif()
 
+        # ffmpeg's VAAPI encoder links libva, which only builds as a shared
+        # library. Copy it next to ffmpeg, whose $ORIGIN rpath finds it there.
+        set(MANGO_BUNDLED_FFMPEG_LIBS "")
+        if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            get_filename_component(VCPKG_FFMPEG_LIB_DIR
+                "${VCPKG_TOOLS_FFMPEG_DIR}/../../lib" ABSOLUTE)
+
+            foreach(lib libva.so.2 libva-drm.so.2)
+                if(EXISTS "${VCPKG_FFMPEG_LIB_DIR}/${lib}")
+                    add_custom_command(
+                        TARGET Mango
+                        POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                            "${VCPKG_FFMPEG_LIB_DIR}/${lib}"
+                            "$<TARGET_FILE_DIR:Mango>/${lib}"
+                        COMMENT "Copying bundled ${lib}..."
+                    )
+                    list(APPEND MANGO_BUNDLED_FFMPEG_LIBS "${lib}")
+                endif()
+            endforeach()
+        endif()
+
 
     else()
 
