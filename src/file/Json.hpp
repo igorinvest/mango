@@ -4,6 +4,7 @@
 #include <fstream>
 #include <glaze/glaze.hpp>
 #include <optional>
+#include <print>
 #include <string>
 
 #include "Serialization.hpp"  // IWYU pragma: keep
