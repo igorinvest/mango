@@ -54,13 +54,13 @@ set(CPACK_STRIP_FILES ON)
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SECTION "video")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-# Lets dpkg-shlibdeps find the bundled libva, which no system package owns.
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS_PRIVATE_DIRS "${CMAKE_BINARY_DIR}")
 
 # The system ffmpeg brings libx264, the software fallback when there's no
 # hardware encoder. Without a bundled one it's the only ffmpeg.
 if(MANGO_BUNDLE_FFMPEG)
     set(CPACK_DEBIAN_PACKAGE_SUGGESTS "ffmpeg")
+    # Lets dpkg-shlibdeps find the bundled libva, which no system package owns.
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS_PRIVATE_DIRS "${CMAKE_BINARY_DIR}")
 else()
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "ffmpeg")
 endif()
