@@ -296,7 +296,9 @@ void RemotePlayback::Remember(const std::string& entryId, const std::string& pee
         .subtitleTracks = result.subtitleTracks,
         .hasCover = result.hasCover,
         .lastPosition = std::nullopt,
-        .stoppedByUser = false};
+        .stoppedByUser = false,
+        .endSent = false,
+        .transcode = std::nullopt};
 }
 
 void RemotePlayback::SendToPeer(const std::string& peerId, std::string text)
