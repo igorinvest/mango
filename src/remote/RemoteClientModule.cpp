@@ -315,6 +315,11 @@ void RemoteClientModule::OnMessage(const std::string& peerId, const std::string&
         m_playback.HandleResult(peerId, text);
         return;
     }
+    if (message->type == "transcodeStatus")
+    {
+        m_playback.HandleTranscodeStatus(peerId, text);
+        return;
+    }
     Log::Debug(LogCategory::Remote, "unhandled {} from source {}", message->type, peerId.substr(0, 8));
 }
 

@@ -120,6 +120,23 @@ void RemotePlayback::HandleResult(const std::string& peerId, const std::string& 
     pending.result->set_value(*result);
 }
 
+// initiateResult came first on the same channel: the stream is known.
+void RemotePlayback::HandleTranscodeStatus(const std::string& peerId, const std::string& text)
+{
+    const auto message = signaling::Read<TranscodeStatusMessage>(text);
+    if (!message)
+    {
+        return;
+    }
+    const auto entryId = RemoteEntryId::Make(peerId, message->fastHash);
+    std::lock_guard lock(m_mutex);
+    if (const auto found = m_streams.find(entryId); found != m_streams.end())
+    {
+        found->second.transcode =
+            TranscodeStatus{.fastHash = entryId, .percent = message->percent, .error = message->error};
+    }
+}
+
 void RemotePlayback::OnLinkUp(const std::string& peerId) { m_warned.erase(peerId); }
 
 void RemotePlayback::OnLinkDown(const std::string& peerId)
@@ -136,6 +153,21 @@ void RemotePlayback::OnLinkDown(const std::string& peerId)
     for (const auto requestId : requestIds)
     {
         Fail(requestId, "peerLinkLost");
+    }
+    ForgetTranscodes(peerId);
+}
+
+// Unknown until the peer reports again: a frozen percentage would look
+// like a stuck conversion.
+void RemotePlayback::ForgetTranscodes(const std::string& peerId)
+{
+    std::lock_guard lock(m_mutex);
+    for (auto& [entryId, stream] : m_streams)
+    {
+        if (stream.peerId == peerId)
+        {
+            stream.transcode.reset();
+        }
     }
 }
 

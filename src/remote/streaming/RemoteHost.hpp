@@ -47,6 +47,10 @@ class RemoteHost
 
     // The library file the current stream plays; empty when none.
     virtual std::string CurrentStreamFastHash() = 0;
+
+    // How far this side's current conversion has got (see
+    // Engine::GetTranscodeStatusJson).
+    virtual TranscodeStatus CurrentTranscode() = 0;
     virtual std::string Title(const std::string& fastHash) = 0;
 
     virtual void PlaybackStarted(const std::string& fastHash, double startSeconds) = 0;

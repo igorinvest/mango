@@ -148,6 +148,13 @@ struct LibraryEntry
     // Such an entry has no filePath and isn't addedManually.
     std::string remotePeerId;
     std::string remotePeerName;
+
+    // For a paired device's video: the names of the folders holding it
+    // there — a subfolder's own name, or the added folder's for a file at
+    // its root — without their paths. UIs group the device's videos by
+    // them (see LibrarySections). Empty for a local video, and for one
+    // added manually there or from a device that doesn't send them.
+    std::vector<std::string> folderNames;
 };
 
 // A single Chromecast (Google Cast) receiver found via network discovery.
@@ -547,7 +554,8 @@ class Engine
     // Whether the current stream's conversion has reached settings.json's
     // "streamStartReadyPercent" (default 10) — native apps poll this during
     // the GetStreamStartDelayMs wait and hand the stream over as soon as it
-    // turns true, instead of always waiting the full delay.
+    // turns true, instead of always waiting the full delay. For a paired
+    // peer's video, the peer's conversion as it reports it.
     [[nodiscard]] bool IsStreamStartReady() const;
 
     // Records how far into fastHash's playback a client actually reached,
@@ -570,13 +578,16 @@ class Engine
     // GetTranscodeProgressPercent. Distinct from lastPositionSeconds/
     // ReportPlaybackProgress, which track how far a client has watched, not
     // how far the transcode itself has gotten. Returns -1 if nothing is
-    // currently streaming (either never started, or stopped since).
+    // currently streaming (either never started, or stopped since). For a
+    // paired peer's video, the peer's conversion (see GetTranscodeStatusJson).
     [[nodiscard]] double GetTranscodeProgressPercent() const;
 
     // GetTranscodeProgressPercent plus the fastHash it belongs to, as a
     // JSON-serialized TranscodeStatus — lets a UI attribute progress to the
     // right movie even for a stream it didn't start itself (one restored
-    // after a restart, or started by another app).
+    // after a restart, or started by another app). For a paired peer's
+    // video, fastHash is its "remote:..." id and the status is what the peer
+    // last reported over the link — nothing while that link is down.
     [[nodiscard]] std::string GetTranscodeStatusJson() const;
 
     // Seconds since the HTTP server last served a stream file to any client

@@ -96,6 +96,19 @@ void PrintPairing(Output& out, const std::string& label, const mango::RemotePair
     }
 }
 
+// Pairing goes through the signaling service; without its URL it can't start.
+bool ReportNoSignalingUrl(Output& out, const mango::RemoteState& state)
+{
+    if (state.signalingConfigured)
+    {
+        return false;
+    }
+    out.Print("No signaling service is set, so pairing can't work. Add\n\n"
+              "  \"remoteSignalingUrl\": \"wss://<your service>/v1\"\n\n"
+              "to settings.json in Mango's data folder, then restart Mango.");
+    return true;
+}
+
 void PrintState(Output& out, const mango::RemoteState& state)
 {
     if (!state.available)
@@ -103,7 +116,8 @@ void PrintState(Output& out, const mango::RemoteState& state)
         out.Print("Remote streaming is unavailable: this device's key couldn't be made (see the log).");
         return;
     }
-    out.Print("  remote    {}   (signaling: {})", state.enabled ? "on" : "off", state.signaling);
+    out.Print("  remote    {}   (signaling: {})", state.enabled ? "on" : "off",
+        state.signalingConfigured ? state.signaling : "not set, see `pair`");
     out.Print("  clients   {}", state.streamingAllowed ? "allowed" : "blocked (clients can't connect)");
     out.Print("  name      {}", state.deviceName);
     out.Print("  device    {}", state.deviceId);
@@ -198,6 +212,10 @@ void Remote(Output& out, RemoteWatcher& watcher, const Args& args)
 
 void Pair(Output& out, RemoteWatcher& watcher)
 {
+    if (ReportNoSignalingUrl(out, watcher.State()))
+    {
+        return;
+    }
     watcher.Remote().OpenInvite();
     out.Print("Opening an invite ...");
 
@@ -216,6 +234,10 @@ void Pair(Output& out, RemoteWatcher& watcher)
 
 void Join(Output& out, RemoteWatcher& watcher, const Args& args)
 {
+    if (ReportNoSignalingUrl(out, watcher.State()))
+    {
+        return;
+    }
     if (args.size() != 1 || !watcher.Remote().JoinInvite(args[0]))
     {
         out.Print("Usage: join mango://pair?s=...&d=...  (the link `pair` shows on the other computer)");

@@ -45,9 +45,9 @@ struct RemotePairingState
 // The latest message for the user (see "Notices" in
 // docs/scope/hybrid_streaming_architecture.md). noticeId increases with each, so
 // an app shows each one once. Codes: "paired" (peer), "pairingFailed"
-// (reason), "peerConnectionFailed" (peer), "peerLinkLost" (peer),
-// "settingsNotApplied" (peer, items), "remoteStreamStarted" (peer, file),
-// "streamStoppedByPeer" (peer, file). peer is the peer's name; items are
+// (reason), "peerConnectionFailed" (peer), "settingsNotApplied" (peer,
+// items), "remoteStreamStarted" (peer, file), "streamStoppedByPeer" (peer,
+// file). peer is the peer's name; items are
 // codecs ("hevc"), presets ("4k") or field names the peer's older Mango
 // didn't take.
 struct RemoteNotice
@@ -61,7 +61,10 @@ struct RemoteNotice
 };
 
 // Everything RemoteStreaming::GetStateJson returns. signaling: "off",
-// "connecting" or "ready". available is false when this device's key
+// "connecting" or "ready". signalingConfigured is false when there's no
+// signaling service URL (neither "remoteSignalingUrl" in settings.json nor
+// the build's default), so signaling stays "off" and pairing can't work.
+// available is false when this device's key
 // couldn't be made (nothing remote works then). streamingAllowed false:
 // clients can't connect to this one (see
 // RemoteStreaming::SetStreamingAllowed). clients play this device's
@@ -72,6 +75,7 @@ struct RemoteState
     bool streamingAllowed = true;
     bool available = true;
     std::string signaling = "off";
+    bool signalingConfigured = true;
     std::string deviceId;
     std::string deviceName;
     int protocol = 0;

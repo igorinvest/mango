@@ -4,6 +4,8 @@
 
 #include <atomic>
 #include <chrono>
+#include <memory>
+#include <mutex>
 #include <thread>
 
 #include <glaze/glaze.hpp>
@@ -17,6 +19,9 @@
 #include "remote/forwarding/ForwardingClient.hpp"
 #include "remote/link/HelloMessage.hpp"
 #include "remote/streaming/RemoteEntryId.hpp"
+#include "remote/streaming/RemoteHost.hpp"
+#include "remote/streaming/RemotePlayback.hpp"
+#include "remote/streaming/RemoteSource.hpp"
 #include "remote/forwarding/RemoteLinkHandler.hpp"
 #include "remote/streaming/RemoteTarget.hpp"
 #include "remote/signaling/SignalingMessages.hpp"
@@ -401,6 +406,111 @@ void InitiateTracksAreOptional()
     Check(answer && answer->audioTrackId == 2 && answer->subtitleTrackId == 5, "A says which tracks play");
 }
 
+// ---- Conversion status -------------------------------------------------------
+
+// A's engine: one stream, converting at percent.
+struct ConvertingHost final : RemoteHost
+{
+    std::vector<mango::LibraryEntry> SharedLibrary() override { return {}; }
+    std::optional<std::filesystem::path> CoverFile(const std::string&) override { return std::nullopt; }
+    HostedStream StartStream(const std::string& fastHash, const TrackRequest&, const StreamTarget&) override
+    {
+        {
+            std::lock_guard lock(mutex);
+            current = fastHash;
+        }
+        HostedStream hosted;
+        hosted.initiation.success = true;
+        hosted.initiation.streamId = "s1";
+        return hosted;
+    }
+    std::optional<std::string> ServerUrl() override { return "http://127.0.0.1:1"; }
+    std::string CurrentStreamFastHash() override
+    {
+        std::lock_guard lock(mutex);
+        return current;
+    }
+    mango::TranscodeStatus CurrentTranscode() override
+    {
+        return {.fastHash = CurrentStreamFastHash(), .percent = percent.load(), .error = {}};
+    }
+    std::string Title(const std::string& fastHash) override { return fastHash; }
+    void PlaybackStarted(const std::string&, double) override {}
+    void ReportPlaybackProgress(const std::string&, double, int, int) override {}
+    void PlaybackEnded(const std::string&) override {}
+
+    std::mutex mutex;
+    std::string current;
+    std::atomic<double> percent{40.0};
+};
+
+// A's RemoteSource and B's RemotePlayback back to back over two threads,
+// with a link that can go down.
+void TranscodeStatusReachesB()
+{
+    mango::SessionThread threadA;
+    mango::SessionThread threadB;
+    std::atomic<bool> linkUp{true};
+    const std::string aId = "peer-a";
+    const std::string bId = "peer-b";
+
+    std::unique_ptr<RemotePlayback> playback;
+    RemoteSource source(threadA,
+        {.send =
+                [&](const std::string&, const std::string& text) {
+                    if (!linkUp)
+                    {
+                        return;
+                    }
+                    threadB.Post([&, text] {
+                        const auto type = signaling::Read<signaling::Envelope>(text)->type;
+                        type == "initiateResult" ? playback->HandleResult(aId, text)
+                                                 : playback->HandleTranscodeStatus(aId, text);
+                    });
+                },
+            .onNotice = [](const std::string&, const std::string&, const std::string&) {}});
+    const auto host = std::make_shared<ConvertingHost>();
+    source.SetHost(host);
+
+    playback = std::make_unique<RemotePlayback>(threadB,
+        RemotePlayback::Callbacks{.example = [](const std::string&) { return std::optional(BuiltInExampleJson()); },
+            .send =
+                [&](const std::string&, const std::string& text) {
+                    const auto type = signaling::Read<signaling::Envelope>(text)->type;
+                    threadA.Post([&, type, text] { (void)source.HandleMessage(bId, type, text); });
+                    return true;
+                },
+            .onNotApplied = [](const std::string&, const std::vector<std::string>&) {},
+            .onEnded = [](const std::string&) {}});
+
+    const auto entryId = RemoteEntryId::Make(aId, "movie1");
+    const auto transcode = [&] {
+        const auto stream = playback->Find(entryId);
+        return stream ? stream->transcode : std::nullopt;
+    };
+
+    const auto result = playback->Initiate(entryId, {}, PlaylistType::DASH, "");
+    Check(result.success, "A starts the stream");
+    Check(WaitUntil([&] { return transcode() && transcode()->percent == 40.0; }, 3s), "the first status comes");
+    Check(transcode() && transcode()->fastHash == entryId, "under B's id for the entry");
+
+    host->percent = 75.0;
+    Check(WaitUntil([&] { return transcode() && transcode()->percent == 75.0; }, 3s), "and keeps coming");
+
+    linkUp = false;
+    threadB.Post([&] { playback->OnLinkDown(aId); });
+    Check(WaitUntil([&] { return !transcode(); }, 3s), "a dropped link forgets it");
+    std::this_thread::sleep_for(1500ms);
+    Check(!transcode(), "nothing while it's down");
+
+    host->percent = 90.0;
+    linkUp = true;
+    Check(WaitUntil([&] { return transcode() && transcode()->percent == 90.0; }, 3s), "back after a reconnect");
+
+    threadA.Stop();
+    threadB.Stop();
+}
+
 // ---- Entry ids and sections ------------------------------------------------
 
 void RemoteEntryIds()
@@ -437,6 +547,42 @@ void RemoteSections()
         "one sorted section per peer");
 }
 
+// A's folder names group B's view of its library, one level deep.
+void RemoteFolderSections()
+{
+    const auto entry = [](const std::string& hash, const std::string& title, std::vector<std::string> folders) {
+        mango::LibraryEntry remote;
+        remote.fastHash = RemoteEntryId::Make("p1", hash);
+        remote.title = title;
+        remote.addedManually = false;
+        remote.remotePeerId = "p1";
+        remote.remotePeerName = "Office";
+        remote.folderNames = std::move(folders);
+        return remote;
+    };
+    const auto loose = entry("a", "Loose", {});
+    const auto heat = entry("b", "Heat", {"Movies"});
+    const auto both = entry("c", "Both", {"Series", "Movies"});
+
+    const auto sections =
+        mango::LibrarySections::Build({heat, loose, both}, {}, mango::LibrarySections::SortOrder::Name);
+    Check(sections.size() == 3, "the device and a section per folder name");
+    if (sections.size() != 3)
+    {
+        return;
+    }
+    Check(sections[0].sectionId == "remote:p1" && sections[0].kind == "remote" &&
+              sections[0].fastHashes == std::vector<std::string>{loose.fastHash},
+        "videos in no folder stay in the device's section");
+    Check(sections[1].sectionId == "remote:p1/Movies" && sections[1].kind == "folder" &&
+              sections[1].parentSectionId == "remote:p1" &&
+              sections[1].breadcrumb == std::vector<std::string>{"Office", "Movies"} &&
+              sections[1].fastHashes == std::vector<std::string>{both.fastHash, heat.fastHash},
+        "a folder under its device, sorted");
+    Check(sections[2].sectionId == "remote:p1/Series" && sections[2].fastHashes == std::vector<std::string>{both.fastHash},
+        "a video in two folders is in each");
+}
+
 }  // namespace
 
 std::vector<TestCase> ForwardingTestCases()
@@ -455,7 +601,9 @@ std::vector<TestCase> ForwardingTestCases()
         {"remote target: strict read on A", TargetReadIsStrict},
         {"remote control: messages read as envelopes", ControlMessagesReadAsEnvelopes},
         {"remote control: initiate tracks are optional", InitiateTracksAreOptional},
+        {"remote control: conversion status reaches B", TranscodeStatusReachesB},
         {"remote library: entry ids", RemoteEntryIds},
         {"remote library: sections", RemoteSections},
+        {"remote library: folder sections", RemoteFolderSections},
     };
 }

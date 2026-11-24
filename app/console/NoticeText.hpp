@@ -11,4 +11,7 @@ namespace mango::cli
 // encoder." English only; an unknown code gets a general text by severity.
 [[nodiscard]] std::string NoticeLine(const mango::SessionNotice& notice);
 
+// The same text without the severity, for the Linux desktop app's banner.
+[[nodiscard]] std::string NoticeText(const mango::SessionNotice& notice);
+
 }  // namespace mango::cli

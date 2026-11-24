@@ -44,6 +44,17 @@
             }
         },
         {
+            "name": "macos-desktop-dev",
+            "displayName": "macOS arm64 Debug with the Linux desktop app, for UI work (set MANGO_QT_PREFIX to a Qt 6 install)",
+            "inherits": "macos-clang-base",
+            "binaryDir": "${sourceDir}/build-desktop-dev",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "MANGO_BUILD_LINUX_APP": "ON",
+                "CMAKE_PREFIX_PATH": "$env{MANGO_QT_PREFIX}"
+            }
+        },
+        {
             "name": "windows-clangcl",
             "displayName": "Windows Clang-cl (C++23), x64",
             "generator": "Visual Studio 18 2026",
@@ -107,6 +118,26 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "MANGO_BUNDLE_FFMPEG": "OFF"
             }
+        },
+        {
+            "name": "linux-x64-desktop",
+            "displayName": "Linux x64 Debug with the desktop app (Qt 6 from the system)",
+            "inherits": "linux-x64-base",
+            "binaryDir": "${sourceDir}/build-linux-x64-desktop",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "MANGO_BUILD_LINUX_APP": "ON"
+            }
+        },
+        {
+            "name": "linux-x64-desktop-release",
+            "displayName": "Linux x64 Release with the desktop app (the mango-desktop package)",
+            "inherits": "linux-x64-base",
+            "binaryDir": "${sourceDir}/build-linux-x64-desktop-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "MANGO_BUILD_LINUX_APP": "ON"
+            }
         }
     ],
     "buildPresets": [
@@ -122,6 +153,10 @@
         {
             "name": "macos-arm64-release",
             "configurePreset": "macos-clang-release"
+        },
+        {
+            "name": "macos-desktop-dev",
+            "configurePreset": "macos-desktop-dev"
         },
         {
             "name": "windows-clangcl-x64-debug",
@@ -156,6 +191,14 @@
         {
             "name": "linux-x64-system-ffmpeg",
             "configurePreset": "linux-x64-system-ffmpeg"
+        },
+        {
+            "name": "linux-x64-desktop-debug",
+            "configurePreset": "linux-x64-desktop"
+        },
+        {
+            "name": "linux-x64-desktop-release",
+            "configurePreset": "linux-x64-desktop-release"
         }
     ]
 }

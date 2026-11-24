@@ -49,7 +49,7 @@ class PeerConnections
     {
         // Something in Status changed.
         std::function<void()> onChanged;
-        // A notice for the user: "peerConnectionFailed" or "peerLinkLost".
+        // A notice for the user: "peerConnectionFailed".
         std::function<void(const std::string& code, const std::string& peerId)> onNotice;
         // A message from a Ready link that the link doesn't handle itself.
         std::function<void(const std::string& peerId, const std::string& text)> onMessage;

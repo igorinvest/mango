@@ -14,14 +14,17 @@ namespace mango
 // (see docs/implemented/add-folder-scope.md): "Added Manually" first, then
 // each added folder in tree order — a folder's own videos, then its
 // subfolders, each followed by its own — then one section per paired
-// device whose library this one shows (see LibraryEntry::remotePeerId). Sorting only reorders siblings, so a
+// device whose library this one shows (see LibraryEntry::remotePeerId),
+// each followed by a flat "folder" section per folder name its videos are
+// in (LibraryEntry::folderNames). Sorting only reorders siblings, so a
 // subfolder never leaves its parent. Search and collapsing stay in the apps.
 namespace LibrarySections
 {
 
 inline constexpr std::string_view manualId = "manual";
 
-// A paired device's library: "remote:<its deviceId>", kind "remote".
+// A paired device's library: "remote:<its deviceId>", kind "remote". Its
+// folders: "remote:<its deviceId>/<folder name>", kind "folder".
 inline constexpr std::string_view remotePrefix = "remote:";
 
 enum class SortOrder

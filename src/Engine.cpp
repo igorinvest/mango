@@ -1,11 +1,11 @@
 #include "Engine.hpp"
 
-#include <atomic>
 #include <format>
 #include <thread>
 
 #include <glaze/glaze.hpp>
 
+#include "CurrentConversion.hpp"
 #include "EngineRemote.hpp"
 #include "EngineRemoteHost.hpp"
 #include "EngineStreams.hpp"
@@ -225,7 +225,8 @@ struct Engine::Impl
 
     // Engine calls for entries of a paired peer's library.
     EngineRemote remoteCalls{session, remote};
-    std::atomic<bool> lastStartWasRemote{false};
+    CurrentConversion conversion{
+        [this](const std::string& entryId) { return remoteCalls.TranscodeStatusOf(entryId); }};
 };
 
 Engine::Engine() : impl(std::make_unique<Impl>())
@@ -278,7 +279,7 @@ void Engine::Start()
 
     impl->session.Enable(ListenModeSetting::GetListenOnlyWhileStreaming());
     impl->appSession->Start();
-    impl->remote.Core().SetHost(std::make_shared<EngineRemoteHost>(*this, impl->session));
+    impl->remote.Core().SetHost(std::make_shared<EngineRemoteHost>(*this, impl->session, impl->conversion));
     impl->remote.Start();
 }
 
@@ -629,9 +630,9 @@ std::string Engine::InitiateStreamJson(
         DescribeRequested(tracks.audioTrackId, false), DescribeRequested(tracks.subtitleTrackId, true),
         PlaylistName(playlist), deviceKey.empty() ? "" : " for ", deviceKey);
 
-    impl->lastStartWasRemote = EngineRemote::Is(fastHash);
     if (EngineRemote::Is(fastHash))
     {
+        impl->conversion.StartedRemote(fastHash);
         const auto remotePayload =
             impl->remoteCalls.Initiate(fastHash, tracks, playlist, deviceKey);
         Log::Info(LogCategory::Stream, "remote stream for {}: {}", fastHash,
@@ -640,6 +641,7 @@ std::string Engine::InitiateStreamJson(
         return glz::write_json(remotePayload).value_or("{}");
     }
 
+    impl->conversion.StartedLocal();
     StreamInitiation payload;
     PlaybackEndDetector::GetInstance().BeginSession(fastHash);
 
@@ -768,17 +770,9 @@ int Engine::GetStreamStartDelayMs() const
     return static_cast<int>(StreamStartDelaySetting::Get().count());
 }
 
-bool Engine::IsStreamStartReady() const
-{
-    // The local conversion says nothing about a peer's: a remote start gets
-    // its full head start (see GetStreamStartDelayMs).
-    if (impl->lastStartWasRemote)
-    {
-        return false;
-    }
-    const auto percent = StreamManager::GetInstance().GetTranscodeProgressPercent();
-    return percent && *percent >= StreamStartDelaySetting::ReadyPercent();
-}
+// A peer's conversion counts once it reported it: until then a remote
+// start gets its full head start (see GetStreamStartDelayMs).
+bool Engine::IsStreamStartReady() const { return impl->conversion.IsReady(); }
 
 void Engine::ReportPlaybackProgress(
     const std::string& fastHash, double positionSeconds, int audioTrackId, int subtitleTrackId)
@@ -791,31 +785,11 @@ void Engine::ReportPlaybackProgress(
     PlaybackHistory::GetInstance().Report(fastHash, positionSeconds, audioTrackId, subtitleTrackId);
 }
 
-double Engine::GetTranscodeProgressPercent() const
-{
-    return StreamManager::GetInstance().GetTranscodeProgressPercent().value_or(-1.0);
-}
+double Engine::GetTranscodeProgressPercent() const { return impl->conversion.Status().percent; }
 
 std::string Engine::GetTranscodeStatusJson() const
 {
-    TranscodeStatus payload;
-    auto& manager = StreamManager::GetInstance();
-
-    if (const auto record = manager.GetCurrentFileRecord())
-    {
-        if (const auto percent = manager.GetTranscodeProgressPercent())
-        {
-            payload.fastHash = record->fastHash;
-            payload.percent = *percent;
-        }
-        else if (const auto error = manager.GetCurrentConversionError())
-        {
-            payload.fastHash = record->fastHash;
-            payload.error = ConversionErrors::ToString(*error);
-        }
-    }
-
-    const auto json = glz::write_json(payload);
+    const auto json = glz::write_json(impl->conversion.Status());
     return json ? *json : R"({"fastHash":"","percent":-1})";
 }
 

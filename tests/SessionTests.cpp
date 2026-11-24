@@ -544,7 +544,7 @@ void EveryCodeHasACatalogEntry()
     for (const auto code : {NoticeCode::StreamStartFailed, NoticeCode::DeviceUnreachable,
              NoticeCode::PlaybackFinished, NoticeCode::PlaybackStopped, NoticeCode::FileNotAdded,
              NoticeCode::SettingsFileReset, NoticeCode::Paired, NoticeCode::PairingFailed,
-             NoticeCode::PeerConnectionFailed, NoticeCode::PeerLinkLost, NoticeCode::SettingsNotApplied,
+             NoticeCode::PeerConnectionFailed, NoticeCode::SettingsNotApplied,
              NoticeCode::RemoteStreamStarted, NoticeCode::StreamStoppedByPeer, NoticeCode::FfmpegMissing})
     {
         Check(Notices::Find(code) != nullptr, std::format("{} is in the catalog", code));
@@ -615,12 +615,12 @@ void TwoNoticesInOneWindowBothArrive()
 void RemoteNoticesJoinTheList()
 {
     Fixture f;
-    f.fake->PostRemoteNotice("peerLinkLost", {{"peer", "Office Mac"}});
+    f.fake->PostRemoteNotice("streamStoppedByPeer", {{"peer", "Office Mac"}, {"file", "Movie.mkv"}});
     f.fake->PostRemoteNotice("noSuchRemoteCode", {});
     Check(WaitUntil([&] { return f.Notices().size() == 1; }), "the remote notice is listed");
 
     const auto notices = f.Notices();
-    Check(notices[0].code == "peerLinkLost" && notices[0].severity == "error", "an error");
+    Check(notices[0].code == "streamStoppedByPeer" && notices[0].severity == "warning", "a warning");
     Check(notices[0].systemNotification, "sent as a system notification");
     Check(notices[0].params.at("peer") == "Office Mac", "naming the peer");
     std::this_thread::sleep_for(50ms);

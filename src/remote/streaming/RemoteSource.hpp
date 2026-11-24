@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -20,7 +21,9 @@ namespace mango::remote
 // (initiate, playbackStart, playbackProgress, playbackEnded) by calling the engine
 // through RemoteHost, and serves /library and /library-cover/<fastHash> to
 // their ForwardingAdapter. The channel's pairing is the only authorization:
-// only messages from relay peers get here.
+// only messages from relay peers get here. While a peer's stream is this
+// side's current conversion, sends the peer its transcodeStatus every
+// second.
 //
 // Lives on the remote thread; a stream start runs on its own worker.
 class RemoteSource
@@ -57,6 +60,23 @@ class RemoteSource
     [[nodiscard]] InitiateResult Start(RemoteHost& host, const InitiateRequest& request);
     void OnStarted(const std::string& peerId, const std::string& fastHash, const std::string& previous,
         const InitiateResult& result);
+    void NoticeStarted(const std::string& peerId, const std::string& fastHash, const std::string& previous);
+
+    // A stream a peer started, whose conversion it's told about.
+    struct PeerStream
+    {
+        std::string fastHash;
+        bool ended = false;
+    };
+
+    void TrackConversion(const std::string& peerId, const std::string& fastHash);
+    void NoteEnded(const std::string& peerId, const std::string& fastHash);
+    void SendTranscodeStatuses();
+    // false once there's nothing more to tell the peer: its file isn't the
+    // current conversion any more, or it ended and the conversion is done.
+    [[nodiscard]] bool SendTranscodeStatus(
+        RemoteHost& host, const std::string& peerId, const PeerStream& stream, const TranscodeStatus& status);
+    void ScheduleTranscodeStatuses();
 
     // On any thread (the adapter's).
     [[nodiscard]] std::optional<LocalResponse> LocalRoute(const std::string& path);
@@ -73,6 +93,10 @@ class RemoteSource
 
     // Files a peer started: replacing one of them isn't "stopped by peer".
     std::set<std::string> m_remoteFiles;
+
+    // By peer id; one stream each, the last it started.
+    std::map<std::string, PeerStream> m_peerStreams;
+    SessionThread::TimerId m_statusTimer = 0;
 
     // Posted tasks hold it weakly: dropped once this is gone.
     std::shared_ptr<int> m_lifetime = std::make_shared<int>(0);

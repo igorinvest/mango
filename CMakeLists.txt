@@ -148,6 +148,28 @@ if(APPLE)
 endif()
 
 #
+# Linux desktop app (Qt 6), off by default. Linux builds two ways from the
+# same sources:
+#   headless (default)          the mango console and systemd service, the
+#                               "mango" package (cmake/LinuxPackage.cmake)
+#   MANGO_BUILD_LINUX_APP=ON    also the desktop app, packaged on its own as
+#                               "mango-desktop" (cmake/LinuxDesktopPackage.cmake)
+# On macOS it builds the app for UI work only (the macos-desktop-dev preset).
+#
+option(MANGO_BUILD_LINUX_APP "Build the Linux desktop app (needs Qt 6.4+)" OFF)
+
+if(MANGO_BUILD_LINUX_APP)
+    if(WIN32)
+        message(FATAL_ERROR "MANGO_BUILD_LINUX_APP is for Linux (and macOS UI work), not Windows.")
+    endif()
+    # The public engine repository leaves the apps out (scripts/export-public.sh).
+    if(NOT EXISTS "${PROJECT_SOURCE_DIR}/Mango Streaming Server Linux/CMakeLists.txt")
+        message(FATAL_ERROR "MANGO_BUILD_LINUX_APP: this repository has no desktop app; build headless.")
+    endif()
+    add_subdirectory("Mango Streaming Server Linux")
+endif()
+
+#
 # Tests (off by default): cmake -DMANGO_BUILD_TESTS=ON, then ctest. Built
 # next to Mango so the bundled ffmpeg is found the same way.
 #
@@ -303,8 +325,13 @@ if(MANGO_BUNDLE_FFMPEG AND DEFINED VCPKG_TARGET_TRIPLET)
 endif()
 
 #
-# Linux: install layout, systemd service and .deb (see cmake/LinuxPackage.cmake)
+# Linux: install layout and .deb, headless (cmake/LinuxPackage.cmake) or
+# desktop (cmake/LinuxDesktopPackage.cmake)
 #
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    include(${PROJECT_SOURCE_DIR}/cmake/LinuxPackage.cmake)
+    if(MANGO_BUILD_LINUX_APP)
+        include(${PROJECT_SOURCE_DIR}/cmake/LinuxDesktopPackage.cmake)
+    else()
+        include(${PROJECT_SOURCE_DIR}/cmake/LinuxPackage.cmake)
+    endif()
 endif()

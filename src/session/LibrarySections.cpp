@@ -263,8 +263,68 @@ void SortEntries(std::vector<const LibraryEntry*>& entries, SortOrder order)
 namespace
 {
 
+// A paired device's folder, under its section: "remote:<peerId>/<name>".
+FolderNode& PeerFolder(FolderNode& root, const std::string& name)
+{
+    auto& child = root.children[name];
+    if (!child)
+    {
+        child = std::make_unique<FolderNode>();
+        child->sectionId = root.sectionId + "/" + name;
+        child->name = name;
+    }
+    return *child;
+}
+
+// The device's videos in no folder directly in its section, the others in
+// a folder per name, one level deep.
+std::unique_ptr<FolderNode> BuildPeerTree(const std::string& peerId, const std::vector<const LibraryEntry*>& entries)
+{
+    auto root = std::make_unique<FolderNode>();
+    root->sectionId = std::string(remotePrefix) + peerId;
+    root->name = entries.front()->remotePeerName;
+
+    for (const auto* entry : entries)
+    {
+        bool inFolder = false;
+        for (const auto& name : entry->folderNames)
+        {
+            if (!name.empty())
+            {
+                AddEntry(PeerFolder(*root, name), *entry);
+                inFolder = true;
+            }
+        }
+        if (!inFolder)
+        {
+            AddEntry(*root, *entry);
+        }
+    }
+
+    ComputeTotals(*root);
+    return root;
+}
+
+void AppendPeerSections(const FolderNode& root, SortOrder order, std::vector<LibrarySection>& sections)
+{
+    sections.push_back(LibrarySection{root.sectionId, "remote", {root.name}, "", SortedHashes(root.entries, order)});
+
+    std::vector<FolderNode*> folders;
+    for (const auto& [_, child] : root.children)
+    {
+        folders.push_back(child.get());
+    }
+    SortNodes(folders, order);
+
+    for (const auto* folder : folders)
+    {
+        AppendSections(*folder, sections, {root.name}, root.sectionId, order);
+    }
+}
+
 // One section per paired device, in the order the devices come, after the
-// local ones: "remote:<peerId>", the device's name as its breadcrumb.
+// local ones: "remote:<peerId>", the device's name as its breadcrumb. Its
+// folders follow as "folder" sections under it (see PeerFolder).
 void AppendRemoteSections(const std::vector<LibraryEntry>& entries, SortOrder order, std::vector<LibrarySection>& sections)
 {
     std::vector<std::string> peers;
@@ -285,10 +345,7 @@ void AppendRemoteSections(const std::vector<LibraryEntry>& entries, SortOrder or
 
     for (const auto& peerId : peers)
     {
-        auto& peerEntries = byPeer[peerId];
-        const auto name = peerEntries.front()->remotePeerName;
-        sections.push_back(
-            LibrarySection{std::string(remotePrefix) + peerId, "remote", {name}, "", SortedHashes(peerEntries, order)});
+        AppendPeerSections(*BuildPeerTree(peerId, byPeer[peerId]), order, sections);
     }
 }
 

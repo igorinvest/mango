@@ -358,13 +358,12 @@ void PeerConnections::OnLinkFinished(const std::string& peerId, PeerLink::State 
     auto& retry = found->second;
     retry.lastLink = PeerLink::ToString(state);
 
+    // A dropped link (Closed) raises no notice: it's retried, and the
+    // apps show the source's state in their Libraries list and Now Playing
+    // bar (see library-list-sidebar-scope.md, section 6).
     if (state == PeerLink::State::Failed)
     {
         NoteFailure(peerId, retry);
-    }
-    else if (state == PeerLink::State::Closed && retry.wanted)
-    {
-        m_callbacks.onNotice("peerLinkLost", peerId);
     }
     else if (state == PeerLink::State::PeerNeedsUpdate || state == PeerLink::State::UpdateRequired)
     {

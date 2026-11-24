@@ -214,8 +214,8 @@ void RemoteLibraries::SetCover(const std::string& peerId, const std::string& ent
     NotifyChanged();
 }
 
-// A's entry as B's session shows it: B's id, no paths from A's disk, and
-// B's own copy of the cover.
+// A's entry as B's session shows it: B's id, no paths from A's disk (A
+// sends only folderNames), and B's own copy of the cover.
 LibraryEntry RemoteLibraries::ToLocal(const std::string& peerId, const std::string& peerName, LibraryEntry entry) const
 {
     const auto cover = SavedCover(peerId, entry.fastHash);

@@ -57,6 +57,12 @@ EngineRemote::EngineRemote(StreamingSession& session, RemoteStreaming& remote) :
 
 bool EngineRemote::Is(const std::string& fastHash) { return remote::RemoteEntryId::Is(fastHash); }
 
+std::optional<TranscodeStatus> EngineRemote::TranscodeStatusOf(const std::string& entryId) const
+{
+    const auto stream = m_remote.Core().Playback().Find(entryId);
+    return stream ? stream->transcode : std::nullopt;
+}
+
 StreamInitiation EngineRemote::Initiate(
     const std::string& entryId, const TrackRequest& tracks, PlaylistType playlist, const std::string& deviceKey)
 {

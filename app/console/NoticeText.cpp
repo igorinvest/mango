@@ -87,10 +87,6 @@ std::string RemoteText(const mango::SessionNotice& notice)
     {
         return std::format("Can't reach {} directly. Its network may block it.", peer);
     }
-    if (code == Code::PeerLinkLost)
-    {
-        return std::format("The connection to {} was lost.", peer);
-    }
     if (code == Code::SettingsNotApplied)
     {
         return std::format("{} runs an older Mango. Not applied: {}.", peer, Param(notice, "items", "some settings"));
@@ -156,5 +152,7 @@ std::string NoticeLine(const mango::SessionNotice& notice)
 {
     return std::format("[{}] {}", notice.severity, Text(notice));
 }
+
+std::string NoticeText(const mango::SessionNotice& notice) { return Text(notice); }
 
 }  // namespace mango::cli

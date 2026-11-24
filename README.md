@@ -2,7 +2,9 @@
 
 A lightweight native app for macOS and Windows that turns your computer into a Chromecast/AirPlay
 streaming server for your local video library. Pick a video file in the app, and Mango serves it
-(transcoding on the fly when needed) to any Chromecast device on your network.
+(transcoding on the fly when needed) to any Chromecast device on your network. Pair two Mangos and
+each can play the other's library on its own TV, even over the internet: see
+[Remote streaming](#remote-streaming).
 
 On Linux, Mango runs headless, as a console server or a systemd service: see [LINUX.md](LINUX.md).
 
@@ -19,7 +21,11 @@ server platform, Mango is a lightweight alternative to Plex and Jellyfin:
   never have to.
 - **No account, no telemetry** — no sign-up, no login, no cloud service in between. Mango
   doesn't collect usage data or phone home: your library and what you watch stay on your
-  computer and your local network.
+  computer and your local network. The only exception is remote streaming, which is off until
+  you turn it on (see [Remote streaming](#remote-streaming)).
+- **Your library on another TV** — pair two Mangos with a QR code or link, and one plays the
+  other's videos on its own TV, at home or across the internet. No account, no port forwarding,
+  no certificates to set up.
 - **Native TV playback** — Mango casts straight into Chromecast's own built-in default player, so
   your TV shows a standard, native Cast experience instead of a custom branded receiver app.
 - **Multitrack audio and subtitles** — pick any audio or subtitle track built into the file, or
@@ -34,7 +40,7 @@ server platform, Mango is a lightweight alternative to Plex and Jellyfin:
   coming soon.
 
 Mango isn't trying to replace everything Plex or Jellyfin offer — their metadata libraries,
-multi-user accounts, and remote access are a different, bigger scope. Mango is built for a
+multi-user accounts, and streaming to browsers and phones are a different, bigger scope. Mango is built for a
 narrower job: casting a video file to your TV as simply and reliably as possible, as a
 lightweight alternative for anyone who doesn't need a full media server just to watch one movie.
 
@@ -186,6 +192,48 @@ the bar shows **Up next** with a **Next** button to skip ahead by hand.
   default). With it off, Up next and Next are hidden too.
 - The Mango app has to stay open for the next video to start.
 
+## Remote streaming
+
+Remote streaming lets two Mangos use each other's libraries, on the same network or over the
+internet. For example, play the movies on your home computer on the TV at a holiday house,
+through a laptop there running Mango.
+
+- A Mango you pair with becomes your **client**: it lists your library and plays your videos on
+  its own TV. In the other direction, a Mango whose library you play is your **source**. The
+  same two devices can be each other's client and source.
+- Remote streaming is in **Settings → Remote**. It's off by default.
+
+**Pairing**
+
+1. On the Mango that has the videos, click **Show Pairing Code** under **My clients**. It shows a
+   QR code and a link that work once and expire after 10 minutes.
+2. On the other Mango, paste the link under **My sources** and click **Pair**.
+
+Both Mangos must be running while they pair. Afterwards, they find each other again on their
+own at every launch.
+
+**Playing**
+
+A source's videos show up in the Media Library under its name, next to your own. Play them like
+any other video: pick a TV in the sidebar and click **Play**. **Refresh
+Library** loads the source's library again. While a source is offline its videos stay listed,
+marked offline.
+
+**Good to know**
+
+- Both computers must stay on, awake and running Mango during playback. The source does the
+  conversion, so its transcoding settings and hardware matter, not the client's.
+- **Allow my clients to stream** stops your clients from playing your library without
+  unpairing them. **Remove** unpairs a device; to use it again, pair again.
+- The devices find each other through Mango's signaling service, which only introduces them.
+  Videos go directly from one Mango to the other, encrypted, and pairing is verified end to
+  end, so the service can't read or change them.
+- If both networks block direct connections (some mobile and carrier-grade NAT networks do),
+  the link fails with "Can't connect".
+- On Linux, remote streaming works from the `mango` command and the service: see
+  [LINUX.md](LINUX.md#remote-streaming). A Linux machine running the service is a handy
+  always-on source.
+
 ## Transcoding settings
 
 The sidebar's transcode mode covers most cases:
@@ -321,6 +369,14 @@ H.265 (HEVC) support for Chromecast.
   starting.
 - `streamStartReadyPercent`: the wait ends early once this percentage of the file has been
   converted (`0` to `100`).
+- `remoteStreamingEnabled`: the **Remote streaming** switch (`false` by default).
+- `remoteStreamingAllowed`: **Allow my clients to stream** (`true` by default).
+- `remoteDeviceName`: this device's name as paired Mangos see it, from the next pairing.
+  Unset: the computer's name.
+- `remoteSignalingUrl`: the signaling service. Release builds have it built in; builds from
+  source need it set (see [LINUX.md](LINUX.md#the-signaling-server)).
+- `ffmpegFolder` (Linux only): a folder with an `ffmpeg` and `ffprobe` to use when the
+  bundled ones lack an encoder (see [LINUX.md](LINUX.md)).
 
 ## Building from source
 

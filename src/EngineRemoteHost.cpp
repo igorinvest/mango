@@ -1,5 +1,6 @@
 #include "EngineRemoteHost.hpp"
 
+#include <algorithm>
 #include <format>
 
 #include <glaze/glaze.hpp>
@@ -15,21 +16,57 @@
 namespace mango
 {
 
-EngineRemoteHost::EngineRemoteHost(const Engine& engine, StreamingSession& session)
-    : m_engine(engine), m_session(session)
+namespace
+{
+
+// The subfolder's own name, or the added folder's for its root.
+std::string FolderName(const LibraryEntryLocation& location, const std::vector<LibraryFolderEntry>& folders)
+{
+    if (!location.folderPath.empty())
+    {
+        const auto slash = location.folderPath.rfind('/');
+        return slash == std::string::npos ? location.folderPath : location.folderPath.substr(slash + 1);
+    }
+    const auto folder = std::ranges::find(folders, location.folderId, &LibraryFolderEntry::folderId);
+    return folder != folders.end() ? folder->name : std::string();
+}
+
+std::vector<std::string> FolderNames(const LibraryEntry& entry, const std::vector<LibraryFolderEntry>& folders)
+{
+    std::vector<std::string> names;
+    for (const auto& location : entry.folderLocations)
+    {
+        auto name = FolderName(location, folders);
+        if (!name.empty() && !std::ranges::contains(names, name))
+        {
+            names.push_back(std::move(name));
+        }
+    }
+    return names;
+}
+
+}  // namespace
+
+EngineRemoteHost::EngineRemoteHost(const Engine& engine, StreamingSession& session, CurrentConversion& conversion)
+    : m_engine(engine), m_session(session), m_conversion(conversion)
 {
 }
 
-// Where the files live on this computer is none of the peer's business.
+// Where the files live on this computer is none of the peer's business:
+// only the names of the folders holding them go.
 std::vector<LibraryEntry> EngineRemoteHost::SharedLibrary()
 {
+    constexpr glz::opts lenient{.error_on_unknown_keys = false};
     std::vector<LibraryEntry> entries;
-    if (glz::read<glz::opts{.error_on_unknown_keys = false}>(entries, m_engine.GetLibraryEntriesJson()))
+    std::vector<LibraryFolderEntry> folders;
+    if (glz::read<lenient>(entries, m_engine.GetLibraryEntriesJson()) ||
+        glz::read<lenient>(folders, m_engine.GetLibraryFoldersJson()))
     {
         return {};
     }
     for (auto& entry : entries)
     {
+        entry.folderNames = FolderNames(entry, folders);
         entry.filePath.clear();
         entry.coverPath.clear();
         entry.folderLocations.clear();
@@ -52,6 +89,8 @@ remote::HostedStream EngineRemoteHost::StartStream(
 {
     remote::HostedStream hosted;
     auto& payload = hosted.initiation;
+    // This computer's own UI shows the conversion it runs for the peer.
+    m_conversion.StartedLocal();
     PlaybackEndDetector::GetInstance().BeginSession(fastHash);
 
     // The forwarding adapter fetches from this server, as a TV would.
@@ -93,6 +132,8 @@ std::string EngineRemoteHost::CurrentStreamFastHash()
     const auto current = StreamManager::GetInstance().GetCurrentFileRecord();
     return current ? current->fastHash : std::string();
 }
+
+TranscodeStatus EngineRemoteHost::CurrentTranscode() { return CurrentConversion::LocalStatus(); }
 
 std::string EngineRemoteHost::Title(const std::string& fastHash)
 {

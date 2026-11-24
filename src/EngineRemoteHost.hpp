@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CurrentConversion.hpp"
 #include "remote/streaming/RemoteHost.hpp"
 
 class StreamingSession;
@@ -13,7 +14,7 @@ namespace mango
 class EngineRemoteHost final : public remote::RemoteHost
 {
    public:
-    EngineRemoteHost(const Engine& engine, StreamingSession& session);
+    EngineRemoteHost(const Engine& engine, StreamingSession& session, CurrentConversion& conversion);
 
     std::vector<LibraryEntry> SharedLibrary() override;
     std::optional<std::filesystem::path> CoverFile(const std::string& fastHash) override;
@@ -21,6 +22,7 @@ class EngineRemoteHost final : public remote::RemoteHost
         const std::string& fastHash, const TrackRequest& tracks, const StreamTarget& target) override;
     std::optional<std::string> ServerUrl() override;
     std::string CurrentStreamFastHash() override;
+    TranscodeStatus CurrentTranscode() override;
     std::string Title(const std::string& fastHash) override;
     void PlaybackStarted(const std::string& fastHash, double startSeconds) override;
     void ReportPlaybackProgress(
@@ -30,6 +32,7 @@ class EngineRemoteHost final : public remote::RemoteHost
    private:
     const Engine& m_engine;
     StreamingSession& m_session;
+    CurrentConversion& m_conversion;
 };
 
 }  // namespace mango

@@ -64,8 +64,6 @@ inline constexpr std::string_view Paired = "paired";
 inline constexpr std::string_view PairingFailed = "pairingFailed";
 // params: peer.
 inline constexpr std::string_view PeerConnectionFailed = "peerConnectionFailed";
-// params: peer.
-inline constexpr std::string_view PeerLinkLost = "peerLinkLost";
 // params: peer, items (comma-separated codecs, presets or field names).
 inline constexpr std::string_view SettingsNotApplied = "settingsNotApplied";
 // params: peer, file.

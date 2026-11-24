@@ -447,6 +447,7 @@ RemoteState RemoteCore::BuildState() const
         .streamingAllowed = m_streamingAllowed,
         .available = m_identity.has_value() || !m_started,
         .signaling = SignalingState(m_signaling.get()),
+        .signalingConfigured = !m_signaling || m_signaling->HasUrl(),
         .deviceId = m_identity ? m_identity->DeviceId() : "",
         .deviceName = m_deviceName,
         .protocol = kProtocolVersion,

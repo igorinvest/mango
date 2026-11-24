@@ -53,6 +53,7 @@ class SignalingClient
     void Stop();
 
     [[nodiscard]] State GetState() const { return m_state; }
+    [[nodiscard]] bool HasUrl() const { return !m_url.empty(); }
 
     // False when the socket isn't ready; the message is dropped then.
     bool Send(const std::string& json);

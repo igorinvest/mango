@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,10 @@ class EngineRemote
     [[nodiscard]] PlaybackEndKind Classify(const std::string& entryId, const PlayerEnd& end);
 
     void NoteStoppedByUser(const std::string& entryId);
+
+    // How far the peer's conversion of entryId has got, as it last said;
+    // std::nullopt before it said or while its link is down.
+    [[nodiscard]] std::optional<TranscodeStatus> TranscodeStatusOf(const std::string& entryId) const;
 
     // The entry a TV plays from contentUrl (".../remote/<peerId>/stream/
     // <streamId>/..."), "" for anything else.

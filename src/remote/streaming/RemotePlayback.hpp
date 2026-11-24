@@ -22,8 +22,9 @@ namespace mango::remote
 // B's remote streams: asks a source peer to start one (initiate, with B's
 // target for the TV fitted to the peer's hello), and keeps what each
 // started stream needs later — which subtitles may be declared, whether it
-// has a cover, how far it was watched. Progress goes to the peer, which
-// keeps the watch history of its own library.
+// has a cover, how far it was watched, how far the peer's conversion of it
+// has got. Progress goes to the peer, which keeps the watch history of its
+// own library.
 //
 // Initiate blocks its caller; the messages are sent and read on the remote
 // thread. Everything else is safe from any thread.
@@ -43,6 +44,9 @@ class RemotePlayback
         std::optional<double> lastPosition;
         bool stoppedByUser = false;
         bool endSent = false;
+        // The peer's latest transcodeStatus, fastHash set to the entry's
+        // id; std::nullopt until the first and while the link is down.
+        std::optional<TranscodeStatus> transcode;
     };
 
     struct Callbacks
@@ -80,6 +84,7 @@ class RemotePlayback
 
     // Remote thread.
     void HandleResult(const std::string& peerId, const std::string& text);
+    void HandleTranscodeStatus(const std::string& peerId, const std::string& text);
     void OnLinkUp(const std::string& peerId);
     void OnLinkDown(const std::string& peerId);
     void FailAll();
@@ -110,6 +115,7 @@ class RemotePlayback
     void Send(const std::string& entryId, const Pending& pending, InitiateRequest request, PlaylistType playlist,
         const std::string& tvDeviceKey);
     void Fail(std::uint32_t requestId, const std::string& error);
+    void ForgetTranscodes(const std::string& peerId);
     void Remember(const std::string& entryId, const std::string& peerId, const InitiateResult& result);
     void SendToPeer(const std::string& peerId, std::string text);
 

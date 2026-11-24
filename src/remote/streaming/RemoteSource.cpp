@@ -20,6 +20,8 @@ constexpr std::string_view kCoverPrefix = "/library-cover/";
 // Covers are a few hundred KB; anything far bigger isn't one.
 constexpr std::uintmax_t kMaxCoverBytes = 16 * 1024 * 1024;
 
+constexpr std::chrono::seconds kStatusInterval{1};
+
 std::optional<std::string> ReadFile(const std::filesystem::path& path)
 {
     std::error_code error;
@@ -94,6 +96,7 @@ bool RemoteSource::HandleMessage(const std::string& peerId, const std::string& t
         if (const auto ended = signaling::Read<PlaybackEnded>(text); ended && host)
         {
             host->PlaybackEnded(ended->fastHash);
+            NoteEnded(peerId, ended->fastHash);
         }
         return true;
     }
@@ -170,8 +173,17 @@ void RemoteSource::OnStarted(
     const std::string& peerId, const std::string& fastHash, const std::string& previous, const InitiateResult& result)
 {
     m_callbacks.send(peerId, signaling::Write(result));
+    if (result.success)
+    {
+        TrackConversion(peerId, fastHash);
+        NoticeStarted(peerId, fastHash, previous);
+    }
+}
+
+void RemoteSource::NoticeStarted(const std::string& peerId, const std::string& fastHash, const std::string& previous)
+{
     const auto host = Host();
-    if (!result.success || !host || previous == fastHash)
+    if (!host || previous == fastHash)
     {
         return;
     }
@@ -183,6 +195,77 @@ void RemoteSource::OnStarted(
     m_remoteFiles.insert(fastHash);
     m_callbacks.onNotice("remoteStreamStarted", peerId, host->Title(fastHash));
 }
+
+// ---- Conversion status ------------------------------------------------------
+
+// The first status goes right after initiateResult: a reused, finished
+// conversion lets B's player start at once.
+void RemoteSource::TrackConversion(const std::string& peerId, const std::string& fastHash)
+{
+    m_peerStreams[peerId] = PeerStream{.fastHash = fastHash};
+    SendTranscodeStatuses();
+}
+
+void RemoteSource::NoteEnded(const std::string& peerId, const std::string& fastHash)
+{
+    if (const auto found = m_peerStreams.find(peerId); found != m_peerStreams.end() && found->second.fastHash == fastHash)
+    {
+        found->second.ended = true;
+    }
+}
+
+void RemoteSource::SendTranscodeStatuses()
+{
+    const auto host = Host();
+    if (!host)
+    {
+        m_peerStreams.clear();
+        return;
+    }
+
+    const auto status = host->CurrentTranscode();
+    std::erase_if(m_peerStreams,
+        [&](const auto& item) { return !SendTranscodeStatus(*host, item.first, item.second, status); });
+    ScheduleTranscodeStatuses();
+}
+
+// A link that's down drops the message; the next one after it's back
+// tells B again.
+bool RemoteSource::SendTranscodeStatus(
+    RemoteHost& host, const std::string& peerId, const PeerStream& stream, const TranscodeStatus& status)
+{
+    if (host.CurrentStreamFastHash() != stream.fastHash)
+    {
+        return false;
+    }
+    // Just started: no progress yet.
+    if (status.fastHash != stream.fastHash)
+    {
+        return true;
+    }
+
+    m_callbacks.send(peerId, signaling::Write(TranscodeStatusMessage{
+                                 .fastHash = status.fastHash, .percent = status.percent, .error = status.error}));
+    const bool finished = status.percent >= 100.0 || !status.error.empty();
+    return !(stream.ended && finished);
+}
+
+void RemoteSource::ScheduleTranscodeStatuses()
+{
+    if (m_statusTimer != 0 || m_peerStreams.empty())
+    {
+        return;
+    }
+    m_statusTimer = m_thread.PostAfter(kStatusInterval, [this, alive = std::weak_ptr(m_lifetime)] {
+        if (alive.lock())
+        {
+            m_statusTimer = 0;
+            SendTranscodeStatuses();
+        }
+    });
+}
+
+// ---- Library ----------------------------------------------------------------
 
 std::optional<LocalResponse> RemoteSource::LocalRoute(const std::string& path)
 {

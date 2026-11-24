@@ -20,7 +20,6 @@ constexpr std::array kCatalog{
     NoticeKind{NoticeCode::Paired, NoticeSeverity::Info},
     NoticeKind{NoticeCode::PairingFailed, NoticeSeverity::Error},
     NoticeKind{NoticeCode::PeerConnectionFailed, NoticeSeverity::Error},
-    NoticeKind{NoticeCode::PeerLinkLost, NoticeSeverity::Error, NoticeRepeat::Window, true},
     NoticeKind{NoticeCode::SettingsNotApplied, NoticeSeverity::Warning},
     NoticeKind{NoticeCode::RemoteStreamStarted, NoticeSeverity::Info, NoticeRepeat::Window, true},
     NoticeKind{NoticeCode::StreamStoppedByPeer, NoticeSeverity::Warning, NoticeRepeat::Window, true},

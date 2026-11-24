@@ -82,6 +82,19 @@ struct PlaybackEnded
     std::string fastHash;
 };
 
+// A → B: how far A's conversion of the stream B started has got, right
+// after initiateResult and then every second while that file is A's
+// current conversion — also across a reconnect, so B never asks. It goes
+// on after playbackEnded until the conversion finishes or fails. percent
+// -1 with error (StreamInitiation's values) when it failed.
+struct TranscodeStatusMessage
+{
+    std::string type = "transcodeStatus";
+    std::string fastHash;
+    double percent = -1.0;
+    std::string error;
+};
+
 // A's /library, fetched over the forwarding protocol: its entries without
 // local paths, and the fastHashes with a cover at /library-cover/<fastHash>.
 struct RemoteLibrary
@@ -132,6 +145,14 @@ struct glz::meta<mango::remote::PlaybackEnded>
 {
     using T = mango::remote::PlaybackEnded;
     static constexpr auto value = object("type", &T::type, "fastHash", &T::fastHash);
+};
+
+template <>
+struct glz::meta<mango::remote::TranscodeStatusMessage>
+{
+    using T = mango::remote::TranscodeStatusMessage;
+    static constexpr auto value =
+        object("type", &T::type, "fastHash", &T::fastHash, "percent", &T::percent, "error", &T::error);
 };
 
 template <>

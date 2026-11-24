@@ -853,7 +853,11 @@ struct FakeHost final : RemoteHost
         return hosted;
     }
     std::optional<std::string> ServerUrl() override { return url; }
-    std::string CurrentStreamFastHash() override { return {}; }
+    std::string CurrentStreamFastHash() override { return startedFastHash; }
+    mango::TranscodeStatus CurrentTranscode() override
+    {
+        return {.fastHash = startedFastHash, .percent = transcodePercent.load(), .error = {}};
+    }
     std::string Title(const std::string&) override { return "Movie"; }
     void PlaybackStarted(const std::string&, double) override {}
     void ReportPlaybackProgress(const std::string&, double positionSeconds, int, int) override
@@ -867,6 +871,7 @@ struct FakeHost final : RemoteHost
     bool startedWithEncoding = false;
     TrackRequest startedTracks;
     std::atomic<double> lastPosition{-1.0};
+    std::atomic<double> transcodePercent{40.0};
     std::atomic<bool> ended{false};
 };
 
@@ -931,6 +936,17 @@ void LiveRemotePlayback()
     const auto body = client ? FetchWhole(*client, "/stream/abc/seg.m4s", 16 * 1024 * 1024, std::chrono::seconds(60))
                              : std::nullopt;
     Check(body && body->body == server.Body(), "the stream crosses the link");
+
+    const auto transcode = [&] {
+        const auto stream = b.remote.Core().Playback().Find(entryId);
+        return stream ? stream->transcode : std::nullopt;
+    };
+    Check(WaitFor([&] { return transcode() && transcode()->percent == 40.0; }, std::chrono::seconds(5)),
+        "A's conversion progress reaches B");
+    Check(transcode() && transcode()->fastHash == entryId, "under B's id for the entry");
+    host->transcodePercent = 75.0;
+    Check(WaitFor([&] { return transcode() && transcode()->percent == 75.0; }, std::chrono::seconds(5)),
+        "and keeps coming");
 
     b.remote.Core().Playback().ReportProgress(entryId, 42.0, 1, 2);
     Check(WaitFor([&] { return host->lastPosition == 42.0; }, std::chrono::seconds(5)), "progress reaches A");
