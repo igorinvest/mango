@@ -8,6 +8,7 @@ each can play the other's library on its own TV, even over the internet: see
 
 On Linux, Mango runs headless, as a console server or a systemd service: see [LINUX.md](LINUX.md).
 
+<img width="1165" height="788" alt="MacOS screenshot new" src="https://github.com/user-attachments/assets/92a4bdf0-e78a-4c0c-b694-80a62f65ad7f" />
 <img width="512" height="336" alt="Windows screenshot" src="https://github.com/user-attachments/assets/29a60d9f-9390-4df5-9b1e-6f8127dfc4ca" />
 <img width="526" height="382" alt="MacOS screenshot" src="https://github.com/user-attachments/assets/7e9eea11-d413-4c2e-89ef-e05f611930eb" />
 
