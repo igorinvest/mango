@@ -239,6 +239,6 @@ cd build-linux-x64-release && cpack          # mango_<version>_amd64.deb and a .
 sudo apt install ./mango_*_amd64.deb
 ```
 
-The package installs `Mango` and the bundled ffmpeg in `/usr/lib/mango`, the `mango` command in `/usr/bin`, and the user service in `/usr/lib/systemd/user`. It requires GCC 14's C++ runtime (`libstdc++6` 14 or later). To build a package for older distributions such as Debian 12 or Ubuntu 22.04, add `-DMANGO_STATIC_CXX_RUNTIME=ON` when you configure. This links the runtime into `Mango` and adds a few MB.
+The package installs `Mango` and the bundled ffmpeg in `/usr/lib/mango`, the `mango` command in `/usr/bin`, and the user service in `/usr/lib/systemd/user`. The C++ runtime is linked into `Mango` (a few MB), so the package also installs on older distributions such as Debian 12 or Ubuntu 22.04. Add `-DMANGO_STATIC_CXX_RUNTIME=OFF` when you configure to use the system's instead; the package then requires GCC 14's C++ runtime (`libstdc++6` 14 or later).
 
 The `linux-x64-system-ffmpeg` preset doesn't build ffmpeg at all (`MANGO_BUNDLE_FFMPEG=OFF`), so it builds faster. Its package depends on the system `ffmpeg` package. Mango finds that ffmpeg in `PATH`, or in the folder set as `ffmpegFolder` in settings.json. The bundled ffmpeg is LGPL only; `packaging/check-ffmpeg-license.sh <path-to-ffmpeg>` checks this.

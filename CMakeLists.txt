@@ -131,9 +131,14 @@ target_compile_options(Mango PRIVATE ${MANGO_WARNING_FLAGS})
 
 # Linux: links the C++ runtime in (a few MB), so a build with GCC 14's
 # libstdc++ (for <print>) also runs on distributions with an older one
-# (Debian 12, Ubuntu 22.04). Off: the .deb requires libstdc++ 14, which
-# Ubuntu 24.04+ and Debian 13+ have.
-option(MANGO_STATIC_CXX_RUNTIME "Linux: link the C++ runtime statically" OFF)
+# (Debian 12, Ubuntu 22.04). On by default on Linux. Off: the .deb requires
+# libstdc++ 14, which Ubuntu 24.04+ and Debian 13+ have.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(MANGO_STATIC_CXX_RUNTIME_DEFAULT ON)
+else()
+    set(MANGO_STATIC_CXX_RUNTIME_DEFAULT OFF)
+endif()
+option(MANGO_STATIC_CXX_RUNTIME "Linux: link the C++ runtime statically" ${MANGO_STATIC_CXX_RUNTIME_DEFAULT})
 if(MANGO_STATIC_CXX_RUNTIME AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(Mango PRIVATE -static-libstdc++ -static-libgcc)
 endif()
